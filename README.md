@@ -46,6 +46,13 @@ Jira REST v3  ──>  scripts/sync.ts  ──>  data/snapshot.json  ──>  (f
                          └─ src/lib/*  pure, tested transformation
 ```
 
+> **Source under review.** The enterprise OData feed that already powers the DDTRoadmap
+> Power BI report exposes the same underlying Jira dataset, and is the likely strategic
+> source — see [`reference/adr-001-data-source.md`](reference/adr-001-data-source.md).
+> Jira REST remains the working source until `npm run probe-odata` answers E1–E3.
+> The transformation layer is source-agnostic, so the migration is confined to the client
+> and the fetch step of `scripts/sync.ts`.
+
 The app never queries Jira at request time. A scheduled sync writes a validated snapshot; everything downstream reads that. This keeps page loads fast, works offline for demos, keeps credentials out of the browser, and makes the data layer a single seam to swap for a database later.
 
 Snapshots are written atomically (temp file + rename), so a failed sync never truncates a good snapshot. A stale-but-valid roadmap beats an empty one.
@@ -68,19 +75,19 @@ Read this before changing the pipeline.
 
 ### 1. Roadmap items are selected by hierarchy level, never by type name
 
-`DDTJG` (Jaguariuna) contains **zero issues of type `Epic`**. It uses a project-local level-1 type called `Digital Project`. Any query filtering on `issuetype = Epic` returns nothing for that site **and reports no error** — the site simply renders as having no work.
+A project-local level-1 type (discovery observed `Digital Project` on a site that is now deferred) makes any query filtering on `issuetype = Epic` return nothing for that site **and report no error** — the site simply renders as having no work.
 
 Selection is therefore on `issuetype.hierarchyLevel === 1`. JQL cannot filter on hierarchy level, so the sync fetches all issues in scope and filters in code. An unrecognised level-1 type name is still ingested, and raises a warning. `verify-snapshot` **fails** if any configured site returns zero items.
 
-See `config/hierarchy.ts`.
+Every level-1 type in the current 19-project scope is expected to be `Epic`, so this path is covered by tests rather than by production data. The rule stays: it costs nothing and a deferred project may return. See `config/hierarchy.ts`.
 
 ### 2. Initiative links are undirected
 
-Site items connect to portfolio Initiatives through an issue link of type `Polaris work item link` (id `10319`), not a parent/child relationship. The direction is **not consistently curated**: for `DDTGMPORT-27`, most site items appear as `inwardIssue` but `DDTHIK-38` appears as `outwardIssue`. Matching honours either direction, and requires the counterpart to be in a configured portfolio project — items also link to each other and to out-of-scope projects.
+Site items connect to portfolio Initiatives through an issue link of type `Polaris work item link` (id `10319`), not a parent/child relationship. The direction is **not consistently curated**: for `DDTGMPORT-27`, most site items appear as `inwardIssue` but `DDTHIK-38` appears as `outwardIssue`. Matching honours either direction, and requires the counterpart to be in a configured portfolio project — items also link to each other and to out-of-scope projects, including the four deferred ones.
 
 ### 3. A terminal Jira status beats an authored RAG
 
-`DDTLESS-96` has Jira status `Done` while its `Health` field still reads "Green" — the site closed the work and never updated the RAG. If the RAG won, completed projects would stay in the active portfolio and on the "On Track" count forever. Terminal workflow state is checked first; the authored value is retained for context.
+Discovery found items with Jira status `Done` whose `Health` field still read "Green" — the site closed the work and never updated the RAG. If the RAG won, completed projects would stay in the active portfolio and on the "On Track" count forever. Terminal workflow state is checked first; the authored value is retained for context.
 
 Similarly, `Will not do` carries `statusCategory: done` in Jira, so cancellation is checked *before* completion — otherwise abandoned work reports as delivered.
 
@@ -102,7 +109,7 @@ Similarly, `Will not do` carries `statusCategory: done` in Jira, so cancellation
 
 `npm run verify-snapshot` compares the snapshot to the discovery baseline in `config/projects.ts` (measured 2026-08-05) and runs canaries. It exits non-zero on any failure.
 
-Checks include: schema validity, project/initiative/item counts, **no site with zero items**, DDTJG returning items via `Digital Project`, timeline coverage, status provenance distribution, risk distribution, executive-summary source distribution, SPOT ID recovery rate, regional totals with no `Unassigned`, initiative linkage (cross-checked against Project Phoenix resolving ~16 items across ~11 sites), and config hygiene including duplicate site codes.
+Checks include: schema validity, project/initiative/item counts, **no site with zero items**, **no deferred site present**, level-1 type distribution, timeline coverage, status provenance distribution, risk distribution, executive-summary source distribution, SPOT ID recovery rate, regional totals with no `Unassigned`, initiative linkage, and config hygiene including duplicate site codes.
 
 Warnings are expected findings — data-quality gaps and open questions — not defects. Only failures block.
 
@@ -137,5 +144,6 @@ Out of MVP scope, but nothing here precludes it:
 - **`Flagged` (customfield_10387) is populated on zero items**, so blockers can only come from issue links. `verify-snapshot` reports if that changes.
 - **`customfield_11199` holds portfolio RAG but its name renders as "Asset ID".** Accepted by decision; worth raising with Jira admins, since the field silently becoming an actual asset ID would produce garbage.
 - **`SGP` = Singapore, `SNG` = Singen.** Codes are display-only; the model keys on Jira project key.
-- Nine of 22 site codes are proposed rather than observed in the reference report.
-- Regions for LA, Covington, Jaguariuna and Lessines are provisional — they are not named in the authoritative region map.
+- Six of 18 site codes are proposed rather than observed in the reference report.
+- **Six baseline metrics still carry pre-rebaseline values.** `itemsWithBothDates`, `itemsWithAnyRag`, `itemsWithSpotNarrative`, `itemsWithSpotIdField`, `overdueActive` and `staleActive90d` are cross-cutting counts that cannot be derived by subtraction, so they were carried over unchanged and will report drift until re-measured from a 19-project sync. Drift is a `WARN`, so the gate still passes. See `INHERITED_BASELINE_KEYS` in `config/projects.ts`.
+- **Lessines is a reconciliation gap.** Of the four deferred sites it is the only one present in the current Power BI report, so this app shows 18 sites where the incumbent shows 19 — a visible 75-item difference. See `DEFERRED_SITES` in `config/projects.ts`.

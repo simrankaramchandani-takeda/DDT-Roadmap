@@ -1,13 +1,27 @@
 /**
  * Fixtures transcribed from REAL Jira payloads retrieved during discovery on
- * 2026-08-05, not invented. Field ids, issue type ids, hierarchy levels, status
- * ids, status categories and link directions are all as returned by the API.
+ * 2026-08-05. Field ids, issue type ids, hierarchy levels, status ids, status
+ * categories and link directions are all as returned by the API.
  *
  * These exist so the pipeline can be verified without credentials, and so the two
  * failure modes that would silently break the roadmap stay covered:
  *
- *   1. DDTJG-86184 uses issue type "Digital Project", not "Epic".
+ *   1. A level-1 issue type that is not called "Epic" is still ingested.
  *   2. DDTHIK-38 links to its initiative in the OPPOSITE direction to DDTSG-55.
+ *
+ * RE-KEYED FIXTURES
+ * -----------------
+ * Three payloads were originally transcribed from DDTJG and DDTLESS, which are
+ * now deferred from MVP scope (see DEFERRED_SITES in config/projects.ts). Since
+ * transformItem correctly SKIPS issues from unregistered projects, leaving them
+ * as-is would have deleted coverage of three rules that remain live in src/lib:
+ * status-suffix stripping, terminal-status-beats-authored-RAG, and "Will not do"
+ * mapping to cancelled rather than complete.
+ *
+ * They are therefore retained with their payload shape intact but re-keyed onto
+ * in-scope projects. The issue keys, project blocks and link counterpart keys
+ * below are SYNTHETIC; every other field is still the real transcribed value.
+ * They are marked individually.
  */
 
 import type { JiraIssue } from '@/lib/jira-client.js';
@@ -236,14 +250,17 @@ export const DDTGC_24: JiraIssue = {
 };
 
 // ---------------------------------------------------------------------------
-// DDTJG-86184 -- Jaguariuna.
+// RE-KEYED (originally DDTJG-86184, Jaguariuna -- now deferred).
 // Issue type "Digital Project", NOT "Epic". Status name suffixed "- Epic".
-// This is the regression case the hierarchy-level model exists for.
+// The hierarchy-level model exists for exactly this shape: a project-local
+// level-1 type that a name-based query would silently miss. No in-scope project
+// exhibits it today, so this fixture is the only coverage of that path.
+// Synthetic: key and project block. Real: everything else.
 // ---------------------------------------------------------------------------
 
-export const DDTJG_86184: JiraIssue = {
+export const DDTBRY_412: JiraIssue = {
   id: '17642078',
-  key: 'DDTJG-86184',
+  key: 'DDTBRY-412',
   fields: {
     summary: 'Digital Fluency, and upskilling workforce FY25',
     issuetype: {
@@ -255,7 +272,7 @@ export const DDTJG_86184: JiraIssue = {
       hierarchyLevel: 1,
       entityId: '6352e070-43d4-4245-a6f9-9ff9e560b981',
     },
-    project: project('12074', 'DDTJG', 'DD&T - Digital Jaguariúna'),
+    project: project('12074', 'DDTBRY', 'DDT Bray'),
     status: status('20431', 'To Do - Epic', 'new'),
     description:
       '**Business Problem & Objective**  \nEnhance workforce digital fluency and upskill employees in FY25 to accelerate adoption of DD&T initiatives, strengthen digital capabilities, and support business transformation objectives.\n\n**Scope (In/Out)**  \n**In:** Digital skills training, learning programs, awareness campaigns, adoption initiatives, and capability-building activities aligned with the DD&T roadmap.',
@@ -269,19 +286,21 @@ export const DDTJG_86184: JiraIssue = {
 };
 
 // ---------------------------------------------------------------------------
-// DDTLESS-96 -- Lessines.
-// Authored Health = Green (non-SPOT). Declared FY26. NO dates.
-// Its Polaris links point OUTSIDE the portfolio (LESOPS-77, DDTLESS-159), so it
-// must resolve as site-local, not as programme-aligned.
+// RE-KEYED (originally DDTLESS-96, Lessines -- now deferred).
+// Authored Health = Green (non-SPOT) while the Jira status is Done: the
+// terminal-state-beats-authored-RAG regression. Declared FY26. NO dates.
+// Its Polaris links point OUTSIDE the portfolio, so it must resolve as
+// site-local, not programme-aligned.
+// Synthetic: key, project block, link counterpart keys. Real: everything else.
 // ---------------------------------------------------------------------------
 
-export const DDTLESS_96: JiraIssue = {
+export const NEUCHDDT_96: JiraIssue = {
   id: '17594607',
-  key: 'DDTLESS-96',
+  key: 'NEUCHDDT-96',
   fields: {
     summary: 'Suivi des Échantillons de Soumission',
     issuetype: EPIC_TYPE('14598', '5a85e439-76a5-4149-bba8-c317a302cb50'),
-    project: project('14924', 'DDTLESS', 'DDT Lessines'),
+    project: project('14924', 'NEUCHDDT', 'DDT Neuchatel'),
     status: status('14925', 'Done', 'done'),
     description: null,
     duedate: null,
@@ -299,7 +318,7 @@ export const DDTLESS_96: JiraIssue = {
         type: POLARIS_LINK_TYPE,
         outwardIssue: {
           id: '18052931',
-          key: 'LESOPS-77',
+          key: 'NEUOPS-77',
           fields: { summary: 'VSM', status: status('15655', 'In Progress', 'indeterminate') },
         },
       },
@@ -308,7 +327,7 @@ export const DDTLESS_96: JiraIssue = {
         type: POLARIS_LINK_TYPE,
         outwardIssue: {
           id: '18055333',
-          key: 'DDTLESS-159',
+          key: 'NEUCHDDT-159',
           fields: {
             summary: 'VSM optimization : Cycle Time Fullfillment (CTFF)',
             status: status('14926', 'In progress', 'indeterminate'),
@@ -320,18 +339,20 @@ export const DDTLESS_96: JiraIssue = {
 };
 
 // ---------------------------------------------------------------------------
-// DDTLESS-133 -- "Will not do".
-// Jira gives this statusCategory `done`, so a category-first implementation
-// reports abandoned work as DELIVERED. Regression fixture for that bug.
+// RE-KEYED (originally DDTLESS-133, Lessines -- now deferred).
+// "Will not do" carries statusCategory `done`, so a category-first
+// implementation reports abandoned work as DELIVERED. Regression fixture for
+// that bug; the rule it guards is still live in src/lib/risk.ts.
+// Synthetic: key and project block. Real: everything else.
 // ---------------------------------------------------------------------------
 
-export const DDTLESS_133: JiraIssue = {
+export const NEUCHDDT_133: JiraIssue = {
   id: '17647669',
-  key: 'DDTLESS-133',
+  key: 'NEUCHDDT-133',
   fields: {
     summary: 'Ecrans extérieurs pour Bornes DC',
     issuetype: EPIC_TYPE('14598', '5a85e439-76a5-4149-bba8-c317a302cb50'),
-    project: project('14924', 'DDTLESS', 'DDT Lessines'),
+    project: project('14924', 'NEUCHDDT', 'DDT Neuchatel'),
     status: status('15910', 'Will not do', 'done'),
     duedate: '2026-06-30',
     customfield_10412: '2025-12-02',
@@ -394,9 +415,9 @@ export const ALL_FIXTURES: JiraIssue[] = [
   DDTSG_55,
   DDTHIK_38,
   DDTGC_24,
-  DDTJG_86184,
-  DDTLESS_96,
-  DDTLESS_133,
+  DDTBRY_412,
+  NEUCHDDT_96,
+  NEUCHDDT_133,
   DDTSG_CHILD_STORY,
   DDTSG_SUBTASK,
 ];

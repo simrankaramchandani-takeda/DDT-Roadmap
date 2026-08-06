@@ -3,8 +3,8 @@
  *
  * Every project here was validated individually against Jira during discovery.
  * Projects are NEVER included or excluded on an inferred naming convention:
- * `NEUCHDDT` and `DDTJG` do not match `DDT [Site]` but are in scope, while
- * `MBODDT`, `PLASMADDT`, `DDTGCPT` and others do contain "DDT" but are not.
+ * `NEUCHDDT` does not match `DDT [Site]` but is in scope, while `MBODDT`,
+ * `PLASMADDT`, `DDTGCPT` and others do contain "DDT" but are not.
  *
  * `expectedActiveItems` records the count observed during discovery on
  * 2026-08-05. verify-snapshot compares against it and fails on a zero count,
@@ -82,13 +82,23 @@ export const SITES: readonly SiteConfig[] = [
   { key: 'DDTBA',    name: 'Buenos Aires',   code: 'BUE', codeObserved: false, inCurrentPowerBiScope: true,  expectedActiveItems: 11 },
   { key: 'DDTNAU',   name: 'Naucalpan',      code: 'NAU', codeObserved: false, inCurrentPowerBiScope: true,  expectedActiveItems: 9  },
   { key: 'DDTBEK',   name: 'Bekasi',         code: 'BEK', codeObserved: false, inCurrentPowerBiScope: true,  expectedActiveItems: 6  },
-
-  // --- active in Jira but absent from the current Power BI report ---
-  { key: 'DDTLA',    name: 'Los Angeles',    code: 'LA',  codeObserved: false, inCurrentPowerBiScope: false, expectedActiveItems: 86 },
-  { key: 'DDTLESS',  name: 'Lessines',       code: 'LES', codeObserved: false, inCurrentPowerBiScope: true,  expectedActiveItems: 75 },
-  { key: 'DDTCOV',   name: 'Covington',      code: 'COV', codeObserved: false, inCurrentPowerBiScope: false, expectedActiveItems: 37 },
-  { key: 'DDTJG',    name: 'Jaguariuna',     code: 'JAG', codeObserved: false, inCurrentPowerBiScope: false, expectedActiveItems: 18 },
 ] as const;
+
+/**
+ * Validated against Jira during discovery, then removed from MVP scope.
+ * Retained so the exclusion is auditable and a future reviewer does not
+ * re-derive it. Restoring one is a single entry in SITES plus a region mapping.
+ *
+ * `DDTLESS` is the reconciliation exception: unlike the other three it IS
+ * present in the current Power BI report, so while it is out of scope this
+ * application shows 18 sites where the incumbent report shows 19.
+ */
+export const DEFERRED_SITES: Readonly<Record<string, string>> = {
+  DDTLA: 'Los Angeles -- deferred from MVP (86 active items at discovery; absent from the Power BI report)',
+  DDTLESS: 'Lessines -- deferred from MVP (75 active items at discovery; PRESENT in the Power BI report)',
+  DDTCOV: 'Covington -- deferred from MVP (37 active items at discovery; absent from the Power BI report)',
+  DDTJG: 'Jaguariuna -- deferred from MVP (18 active items at discovery; absent from the Power BI report)',
+} as const;
 
 /**
  * Projects investigated during discovery and deliberately excluded, with the
@@ -151,17 +161,53 @@ export const RESOLVED_SITES: readonly ResolvedSite[] = SITES.map((s) => {
   return { ...s, region, regionProvisional: provisional };
 });
 
-/** Discovery totals, used by verify-snapshot as the acceptance baseline. */
+/**
+ * Discovery totals, used by verify-snapshot as the acceptance baseline.
+ *
+ * REBASELINED for the 19-project MVP scope (see DEFERRED_SITES). Dropping
+ * DDTLA (86), DDTLESS (75), DDTCOV (37) and DDTJG (18) removes 216 expected
+ * active items -- 33% of the original 645, far beyond verify-snapshot's 10%
+ * drift tolerance, so the original baseline could not be left in place.
+ *
+ * Values below are in two classes:
+ *
+ *   DERIVED   -- recomputed by subtraction from the discovery figures, because
+ *                the removed quantity is known per site. These double as an
+ *                independent cross-check: if the first 19-project sync does not
+ *                land near them, something changed beyond the scope reduction.
+ *
+ *   INHERITED -- cross-cutting counts whose distribution across the dropped
+ *                sites was never measured, so they CANNOT be derived by
+ *                subtraction. They are carried over unchanged and WILL drift
+ *                (verify-snapshot records drift as WARN, not FAIL, so the gate
+ *                still passes). Re-measure them from the first authenticated
+ *                19-project sync and promote them to DERIVED. Guessing a
+ *                proportional split here would silently weaken the gate.
+ */
 export const DISCOVERY_BASELINE = {
   asOf: '2026-08-05',
-  projectCount: ALL_PROJECT_KEYS.length, // 23
-  initiatives: 36,
-  activeItems: 645,
-  itemsWithBothDates: 472,
-  itemsWithAnyRag: 84,
-  itemsWithSpotNarrative: 8,
-  itemsWithSpotIdField: 8,
-  overdueActive: 67,
-  staleActive90d: 17,
-  byRegion: { Americas: 278, Europe: 264, 'Asia-Pacific': 103 },
+  rebaselinedFor: '19-project MVP scope',
+  projectCount: ALL_PROJECT_KEYS.length, // DERIVED: 19 (1 portfolio + 18 sites)
+  initiatives: 36,                       // DERIVED: unchanged -- level-2 issues live in DDTGMPORT
+  activeItems: 429,                      // DERIVED: 645 - 216
+  itemsWithBothDates: 472,               // INHERITED -- re-measure
+  itemsWithAnyRag: 84,                   // INHERITED -- re-measure
+  itemsWithSpotNarrative: 8,             // INHERITED -- re-measure
+  itemsWithSpotIdField: 8,               // INHERITED -- re-measure
+  overdueActive: 67,                     // INHERITED -- re-measure
+  staleActive90d: 17,                    // INHERITED -- re-measure
+  // DERIVED: Americas 278 - (LA 86 + Covington 37 + Jaguariuna 18) = 137
+  //          Europe   264 - (Lessines 75)                          = 189
+  //          Asia-Pacific unchanged -- no dropped site was in it.
+  byRegion: { Americas: 137, Europe: 189, 'Asia-Pacific': 103 },
 } as const;
+
+/** Baseline keys still carrying pre-rebaseline values; surfaced by verify-snapshot. */
+export const INHERITED_BASELINE_KEYS: readonly string[] = [
+  'itemsWithBothDates',
+  'itemsWithAnyRag',
+  'itemsWithSpotNarrative',
+  'itemsWithSpotIdField',
+  'overdueActive',
+  'staleActive90d',
+] as const;

@@ -9,13 +9,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALL_FIXTURES,
+  DDTBRY_412,
   DDTGC_24,
   DDTGMPORT_27,
   DDTHIK_38,
-  DDTJG_86184,
-  DDTLESS_96,
-  DDTLESS_133,
   DDTSG_55,
+  NEUCHDDT_96,
+  NEUCHDDT_133,
 } from './fixtures/jira-issues.js';
 import {
   buildUnalignedInitiative,
@@ -50,12 +50,12 @@ describe('classifyIssues: selection by hierarchy level', () => {
 
     expect(initiatives.map((i) => i.key)).toEqual(['DDTGMPORT-27']);
     expect(items.map((i) => i.key).sort()).toEqual([
+      'DDTBRY-412',
       'DDTGC-24',
       'DDTHIK-38',
-      'DDTJG-86184',
-      'DDTLESS-133',
-      'DDTLESS-96',
       'DDTSG-55',
+      'NEUCHDDT-133',
+      'NEUCHDDT-96',
     ]);
   });
 
@@ -68,10 +68,10 @@ describe('classifyIssues: selection by hierarchy level', () => {
 
   it('ingests "Digital Project" and warns so a new type name cannot pass unnoticed', () => {
     const warnings: string[] = [];
-    const { items } = classifyIssues([DDTJG_86184], warnings);
+    const { items } = classifyIssues([DDTBRY_412], warnings);
 
     // Ingested despite not being called "Epic".
-    expect(items.map((i) => i.key)).toEqual(['DDTJG-86184']);
+    expect(items.map((i) => i.key)).toEqual(['DDTBRY-412']);
     // "Digital Project" is known, so no warning.
     expect(warnings).toHaveLength(0);
   });
@@ -79,12 +79,12 @@ describe('classifyIssues: selection by hierarchy level', () => {
   it('warns on a level-1 type name never seen during discovery', () => {
     const warnings: string[] = [];
     const novel = {
-      ...DDTJG_86184,
-      key: 'DDTLA-1',
+      ...DDTBRY_412,
+      key: 'DDTVAS-1',
       fields: {
-        ...DDTJG_86184.fields,
+        ...DDTBRY_412.fields,
         issuetype: { id: '99999', name: 'Site Programme', subtask: false, hierarchyLevel: 1 },
-        project: { self: '', id: '15562', key: 'DDTLA', name: 'DDT LA' },
+        project: { self: '', id: '15562', key: 'DDTVAS', name: 'DDT Vashi' },
       },
     };
     const { items } = classifyIssues([novel], warnings);
@@ -107,12 +107,12 @@ describe('findInitiativeKey: undirected link matching', () => {
   });
 
   it('ignores Polaris links whose counterpart is outside the portfolio', () => {
-    // DDTLESS-96 links to LESOPS-77 and DDTLESS-159 -- neither is a portfolio.
-    expect(findInitiativeKey(DDTLESS_96)).toBeUndefined();
+    // NEUCHDDT-96 links to NEUOPS-77 and NEUCHDDT-159 -- neither is a portfolio.
+    expect(findInitiativeKey(NEUCHDDT_96)).toBeUndefined();
   });
 
   it('returns undefined when there are no links', () => {
-    expect(findInitiativeKey(DDTJG_86184)).toBeUndefined();
+    expect(findInitiativeKey(DDTBRY_412)).toBeUndefined();
   });
 });
 
@@ -164,14 +164,14 @@ describe('transformItem', () => {
     expect(item.summary.fyTag).toBe('FY26');
   });
 
-  it('maps DDTJG-86184 via "Digital Project" and strips the status suffix', () => {
-    const item = transformItem(DDTJG_86184, context())!;
+  it('maps a non-"Epic" level-1 type and strips the status suffix', () => {
+    const item = transformItem(DDTBRY_412, context())!;
 
     expect(item.issueTypeName).toBe('Digital Project');
-    expect(item.siteName).toBe('Jaguariuna');
-    expect(item.region).toBe('Americas');
-    // Provisional: Jaguariuna is not named in the authoritative region map.
-    expect(item.regionProvisional).toBe(true);
+    expect(item.siteName).toBe('Bray');
+    expect(item.region).toBe('Europe');
+    // Every in-scope site resolves through the authoritative region map.
+    expect(item.regionProvisional).toBe(false);
 
     // "To Do - Epic" must normalise, not fall through to the category fallback.
     expect(item.status.raw).toBe('To Do - Epic');
@@ -184,8 +184,8 @@ describe('transformItem', () => {
     expect(item.narrative.executiveSummary).not.toContain('Business Problem');
   });
 
-  it('maps DDTLESS-96 as site-local with a non-SPOT authored status', () => {
-    const item = transformItem(DDTLESS_96, context())!;
+  it('maps NEUCHDDT-96 as site-local with a non-SPOT authored status', () => {
+    const item = transformItem(NEUCHDDT_96, context())!;
 
     expect(item.alignment).toBe('local');
     expect(item.initiativeKey).toBeUndefined();
@@ -206,7 +206,7 @@ describe('transformItem', () => {
   it('maps "Will not do" to cancelled, NOT complete', () => {
     // Jira gives this statusCategory `done`. Reporting it as complete would
     // inflate the delivered count with abandoned work.
-    const item = transformItem(DDTLESS_133, context())!;
+    const item = transformItem(NEUCHDDT_133, context())!;
 
     expect(item.status.raw).toBe('Will not do');
     expect(item.risk.level).toBe('cancelled');
@@ -306,7 +306,7 @@ describe('findBlockers', () => {
     // The DDT schema has no usable blocker signal today: `Flagged` is empty
     // portfolio-wide and Polaris links are not blocking links.
     expect(findBlockers(DDTSG_55)).toEqual([]);
-    expect(findBlockers(DDTLESS_96)).toEqual([]);
+    expect(findBlockers(NEUCHDDT_96)).toEqual([]);
   });
 
   it('detects an open blocker and ignores a resolved one', () => {
@@ -411,9 +411,9 @@ describe('full snapshot assembly', () => {
       (i) => i.risk.level !== 'complete' && i.risk.level !== 'cancelled',
     );
 
-    // DDTLESS-96 is Done and DDTLESS-133 is Will not do.
-    expect(active.map((i) => i.key)).not.toContain('DDTLESS-96');
-    expect(active.map((i) => i.key)).not.toContain('DDTLESS-133');
+    // NEUCHDDT-96 is Done and NEUCHDDT-133 is Will not do.
+    expect(active.map((i) => i.key)).not.toContain('NEUCHDDT-96');
+    expect(active.map((i) => i.key)).not.toContain('NEUCHDDT-133');
   });
 
   it('reports coverage that distinguishes reported from inferred', () => {
@@ -439,10 +439,12 @@ describe('full snapshot assembly', () => {
     const { items } = transformAll();
     const summaries = buildSiteSummaries(items);
 
-    // All 22 sites appear, so an empty site is visible as a finding.
-    expect(summaries).toHaveLength(22);
+    // All 18 in-scope sites appear, so an empty site is visible as a finding.
+    expect(summaries).toHaveLength(18);
     expect(summaries.find((s) => s.key === 'DDTSG')?.activeCount).toBe(1);
-    expect(summaries.find((s) => s.key === 'DDTLA')?.activeCount).toBe(0);
+    expect(summaries.find((s) => s.key === 'DDTOSA')?.activeCount).toBe(0);
+    // Deferred sites must not reappear in the rollup.
+    expect(summaries.find((s) => s.key === 'DDTLESS')).toBeUndefined();
   });
 
   it('collects site-local items into the unaligned lane', () => {
@@ -450,7 +452,7 @@ describe('full snapshot assembly', () => {
     const local = items.filter((i) => i.alignment === 'local');
     const unaligned = buildUnalignedInitiative(local, ctx);
 
-    expect(local.map((i) => i.key).sort()).toEqual(['DDTJG-86184', 'DDTLESS-133', 'DDTLESS-96']);
+    expect(local.map((i) => i.key).sort()).toEqual(['DDTBRY-412', 'NEUCHDDT-133', 'NEUCHDDT-96']);
     expect(unaligned.itemKeys).toHaveLength(3);
     expect(unaligned.narrative.executiveSummary).toContain('site-led projects');
   });

@@ -16,7 +16,13 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { DISCOVERY_BASELINE, PORTFOLIOS, RESOLVED_SITES } from '@config/projects.js';
+import {
+  DEFERRED_SITES,
+  DISCOVERY_BASELINE,
+  INHERITED_BASELINE_KEYS,
+  PORTFOLIOS,
+  RESOLVED_SITES,
+} from '@config/projects.js';
 import { findDuplicateSiteCodes, UNCONFIRMED_SITE_CODES } from '@config/site-codes.js';
 import { snapshotSchema, UNALIGNED_INITIATIVE_KEY, type Snapshot } from '@/types/domain.js';
 
@@ -143,8 +149,20 @@ async function main(): Promise<void> {
     record('WARN', 'Site counts drifted >25%', driftedSites.join('; '));
   }
 
-  // --- the DDTJG regression test ----------------------------------------
-  heading('Hierarchy-level model (the DDTJG regression)');
+  // --- hierarchy-level model --------------------------------------------
+  //
+  // This section previously hard-failed if DDTJG returned zero items, since
+  // Jaguariuna was the only observed project using a non-"Epic" level-1 type
+  // ("Digital Project"). DDTJG is now out of MVP scope, so that assertion would
+  // fail unconditionally and has been replaced.
+  //
+  // The invariant it protected still holds and still matters: selection is on
+  // issuetype.hierarchyLevel, never on type name. Within the 19-project scope
+  // that is no longer observable from the data -- every in-scope level-1 type is
+  // expected to be "Epic" -- so it is now enforced by the per-site zero canary
+  // above (the failure mode that actually hurts) plus unit coverage of the
+  // alternate-type path in tests/pipeline.test.ts.
+  heading('Hierarchy-level model');
   const typeNames = new Map<string, number>();
   for (const item of items) typeNames.set(item.issueTypeName, (typeNames.get(item.issueTypeName) ?? 0) + 1);
 
@@ -152,32 +170,22 @@ async function main(): Promise<void> {
     line(`  ${name.padEnd(20)} ${String(count).padStart(4)} items`);
   }
 
-  const jgItems = items.filter((i) => i.siteKey === 'DDTJG');
-  const digitalProjectItems = items.filter((i) => i.issueTypeName === 'Digital Project');
-
-  if (jgItems.length === 0) {
+  const unexpectedTypeNames = [...typeNames.keys()].filter((n) => n !== 'Epic');
+  if (unexpectedTypeNames.length > 0) {
+    // Not a failure -- ingestion is hierarchy-driven, so a new type name is
+    // carried rather than dropped. It is reported because it means a site
+    // introduced a project-local level-1 type, which config should acknowledge.
     record(
-      'FAIL',
-      'DDTJG returns items',
-      'Jaguariuna returned zero items. It has NO issues of type "Epic" — if this ' +
-        'fails, the pipeline has regressed to name-based type matching.',
+      'WARN',
+      'Non-"Epic" level-1 type ingested',
+      `${unexpectedTypeNames.join(', ')} — ingested correctly via hierarchy level. ` +
+        `Add to KNOWN_LEVEL_1_TYPE_NAMES in config/hierarchy.ts if expected.`,
     );
   } else {
     record(
       'PASS',
-      'DDTJG returns items',
-      `${jgItems.length} items via type "${jgItems[0]!.issueTypeName}" ` +
-        `(${digitalProjectItems.length} "Digital Project" items portfolio-wide)`,
-    );
-  }
-
-  if (typeNames.size > 1) {
-    record('PASS', 'Multiple level-1 type names ingested', `${typeNames.size} distinct type names`);
-  } else {
-    record(
-      'WARN',
-      'Only one level-1 type name found',
-      'Discovery observed two ("Epic" and "Digital Project"). Verify DDTJG is in scope.',
+      'Level-1 types as expected',
+      `all ${items.length} items are type "Epic"; no project-local level-1 type in the 19-project scope`,
     );
   }
 
@@ -312,19 +320,67 @@ async function main(): Promise<void> {
     const siteCount = phoenix.siteRollup.length;
     line(`\n  Cross-check "${phoenix.summary}": ${phoenix.itemKeys.length} items across ${siteCount} sites`);
     line(`    sites: ${phoenix.siteRollup.map((s) => s.siteCode).join(', ')}`);
-    if (phoenix.itemKeys.length >= 10) {
-      record('PASS', 'Undirected link matching works', `${phoenix.summary} resolved ${phoenix.itemKeys.length} items across ${siteCount} sites (discovery found 16 across 11)`);
+    // Discovery measured 16 items across 11 sites over the ORIGINAL 23-project
+    // scope. Four sites are now deferred, so a lower count here is expected and
+    // is not evidence of a link-matching regression. The threshold is reduced
+    // accordingly; what still matters is that undirected matching resolves a
+    // meaningful cross-site rollup at all.
+    if (phoenix.itemKeys.length >= 6) {
+      record(
+        'PASS',
+        'Undirected link matching works',
+        `${phoenix.summary} resolved ${phoenix.itemKeys.length} items across ${siteCount} sites ` +
+          `(discovery found 16 across 11, over the pre-rebaseline 23-project scope)`,
+      );
     } else {
       record(
         'WARN',
-        'Phoenix linkage lower than discovery',
-        `${phoenix.itemKeys.length} items vs 16 at discovery. Link direction handling may have regressed.`,
+        'Phoenix linkage lower than expected',
+        `${phoenix.itemKeys.length} items across ${siteCount} sites. Some of the shortfall is the ` +
+          `scope reduction, but below 6 the link direction handling should be checked for a regression.`,
       );
     }
   }
 
   // --- config hygiene ----------------------------------------------------
   heading('Config hygiene');
+
+  const deferred = Object.keys(DEFERRED_SITES);
+  line(`  Deferred from MVP scope: ${deferred.join(', ')}`);
+  const leakedDeferred = items.filter((i) => deferred.includes(i.siteKey));
+  if (leakedDeferred.length > 0) {
+    record(
+      'FAIL',
+      'Deferred site present in snapshot',
+      `${leakedDeferred.length} items from ${[...new Set(leakedDeferred.map((i) => i.siteKey))].join(', ')} ` +
+        `— these projects are out of MVP scope but were ingested.`,
+    );
+  } else {
+    record('PASS', 'No deferred sites in snapshot', `${deferred.length} deferred projects, none ingested`);
+  }
+
+  // Any item whose initiative link resolved through a deferred project would
+  // change alignment silently; the counterpart-membership check should prevent
+  // it, but the scope reduction makes this newly reachable.
+  const deferredLinked = items.filter((i) => i.initiativeKey && deferred.some((d) => i.initiativeKey!.startsWith(`${d}-`)));
+  if (deferredLinked.length > 0) {
+    record(
+      'FAIL',
+      'Initiative resolved through a deferred project',
+      `${deferredLinked.length} items link to an initiative in a deferred project, e.g. ${deferredLinked[0]!.key}`,
+    );
+  }
+
+  if (INHERITED_BASELINE_KEYS.length > 0) {
+    record(
+      'WARN',
+      'Baseline metrics awaiting re-measurement',
+      `${INHERITED_BASELINE_KEYS.join(', ')} still carry pre-rebaseline (23-project) values, so ` +
+        `drift on those lines is expected and is not a defect. Re-measure from this run and ` +
+        `update DISCOVERY_BASELINE in config/projects.ts.`,
+    );
+  }
+
   const dupeCodes = findDuplicateSiteCodes();
   if (dupeCodes.length === 0) record('PASS', 'Site codes unique', 'no duplicate 3-letter codes');
   else record('FAIL', 'Duplicate site codes', dupeCodes.join(', '));

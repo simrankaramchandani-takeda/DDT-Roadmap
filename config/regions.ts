@@ -7,10 +7,12 @@
  *   - Yaroslavl (Russia) -> Asia-Pacific
  * Do not "correct" these.
  *
- * Four sites are not named in the supplied map and are assigned provisionally
- * by the implementation plan (see PROVISIONAL_REGION_SITES). They are flagged
- * on every item as `regionProvisional: true` so they can be re-assigned or
- * filtered in one place.
+ * Every site in the 19-project MVP scope resolves through the authoritative map
+ * below. The provisional mechanism is retained but currently empty: the four
+ * sites that needed it (Los Angeles, Covington, Jaguariuna, Lessines) are all
+ * deferred from MVP scope (see DEFERRED_SITES in config/projects.ts). Restoring
+ * any of them requires a region decision here first, otherwise it resolves to
+ * `Unassigned`, which verify-snapshot treats as a FAIL.
  */
 
 export const REGIONS = ['Americas', 'Asia-Pacific', 'Europe'] as const;
@@ -33,13 +35,12 @@ export const AUTHORITATIVE_REGION_MAP: Readonly<Record<Region, readonly string[]
 /**
  * Sites active in Jira but absent from the authoritative map.
  * Assigned by the plan; every resulting item carries `regionProvisional: true`.
+ *
+ * Empty under the 19-project MVP scope -- all four former entries are deferred
+ * sites. Kept as a live mechanism so restoring a site is a one-line change here
+ * rather than a rework of the region model.
  */
-export const PROVISIONAL_REGION_MAP: Readonly<Record<string, Region>> = {
-  'Los Angeles': 'Americas',
-  Covington: 'Americas',
-  'Jaguariuna': 'Americas',
-  Lessines: 'Europe',
-} as const;
+export const PROVISIONAL_REGION_MAP: Readonly<Record<string, Region>> = {} as const;
 
 /** Site display names whose region is provisional rather than authoritative. */
 export const PROVISIONAL_REGION_SITES: readonly string[] = Object.keys(PROVISIONAL_REGION_MAP);

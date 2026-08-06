@@ -4,6 +4,8 @@ node_modules/
 data/snapshot.json
 data/snapshot.meta.json
 data/*.tmp
+# Raw OData rows dumped by scripts/probe-odata.ts -- real Jira content.
+data/probe/
 *.log
 .DS_Store
 Thumbs.db

@@ -4,12 +4,17 @@
  * THIS IS THE MOST IMPORTANT CONFIG FILE IN THE PROJECT.
  *
  * Roadmap items are identified by Jira's `issuetype.hierarchyLevel`, NEVER by
- * issue type name. Discovery found that `DDTJG` (Jaguariuna) contains zero
- * issues of type `Epic` -- it uses a project-local level-1 type called
- * `Digital Project` ("Use this as an umbrella to hold all tasks for a digital
- * project"). A pipeline keyed on `issuetype = Epic` returns an empty result for
- * that site and reports no error, which is the single worst failure mode
- * available to this application: a site that looks like it has no work.
+ * issue type name. A pipeline keyed on `issuetype = Epic` returns an empty
+ * result for any site using a project-local level-1 type, and reports no error
+ * -- the single worst failure mode available to this application: a site that
+ * looks like it has no work.
+ *
+ * Discovery evidenced this on a project that is now deferred from MVP scope, so
+ * within the current 19-project scope every level-1 type is expected to be
+ * `Epic`. The rule is retained deliberately. It costs nothing, it is the only
+ * defence if a site introduces a local type, and a deferred project may return.
+ * Coverage of the alternate-type path lives in tests/pipeline.test.ts rather
+ * than in production data; verify-snapshot reports any non-`Epic` type it sees.
  *
  * Jira hierarchy levels:
  *   -1  subtask
@@ -29,7 +34,10 @@ export const PORTFOLIO_INITIATIVE_HIERARCHY_LEVEL = 2;
  */
 export const KNOWN_LEVEL_1_TYPE_NAMES: readonly string[] = [
   'Epic',
-  'Digital Project', // DDTJG only
+  // Observed during discovery on a now-deferred project. Retained so that if
+  // the project returns, or another site adopts the same local type, it is
+  // ingested silently rather than raising a spurious warning.
+  'Digital Project',
 ] as const;
 
 /** Level-2 type names observed during discovery. Same warn-only semantics. */
@@ -58,8 +66,10 @@ export function isUnexpectedLevel2TypeName(name: string): boolean {
  *   - Direction is NOT consistently curated: for a single Initiative, some site
  *     items appear as `inwardIssue` and others as `outwardIssue`. Matching must
  *     therefore be UNDIRECTED.
- *   - Links can point at projects outside scope (e.g. DDTLESS-96 -> LESOPS-77),
- *     so the counterpart must be checked for portfolio membership.
+ *   - Links can point at projects outside scope, so the counterpart must be
+ *     checked for portfolio membership. This is newly load-bearing: in-scope
+ *     items link to the four projects deferred from MVP scope, and those
+ *     counterparts must now be rejected.
  */
 export const INITIATIVE_LINK_TYPE_ID = '10319';
 export const INITIATIVE_LINK_TYPE_NAME = 'Polaris work item link';
