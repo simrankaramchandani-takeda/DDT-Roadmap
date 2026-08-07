@@ -89,16 +89,37 @@ export const SITES: readonly SiteConfig[] = [
  * Retained so the exclusion is auditable and a future reviewer does not
  * re-derive it. Restoring one is a single entry in SITES plus a region mapping.
  *
- * `DDTLESS` is the reconciliation exception: unlike the other three it IS
- * present in the current Power BI report, so while it is out of scope this
- * application shows 18 sites where the incumbent report shows 19.
+ * All four are treated identically. Item counts are the discovery figures, kept
+ * so the rebaselined totals in DISCOVERY_BASELINE can be re-derived.
  */
 export const DEFERRED_SITES: Readonly<Record<string, string>> = {
-  DDTLA: 'Los Angeles -- deferred from MVP (86 active items at discovery; absent from the Power BI report)',
-  DDTLESS: 'Lessines -- deferred from MVP (75 active items at discovery; PRESENT in the Power BI report)',
-  DDTCOV: 'Covington -- deferred from MVP (37 active items at discovery; absent from the Power BI report)',
-  DDTJG: 'Jaguariuna -- deferred from MVP (18 active items at discovery; absent from the Power BI report)',
+  DDTLA: 'Los Angeles -- deferred from MVP (86 active items at discovery)',
+  DDTLESS: 'Lessines -- deferred from MVP (75 active items at discovery)',
+  DDTCOV: 'Covington -- deferred from MVP (37 active items at discovery)',
+  DDTJG: 'Jaguariuna -- deferred from MVP (18 active items at discovery)',
 } as const;
+
+/**
+ * DDTJG IS DEFERRED AND MUST NOT DRIVE ARCHITECTURAL DECISIONS.
+ *
+ * It keeps resurfacing because it is unusually visible in the source data, and
+ * each appearance has previously been mistaken for a signal:
+ *
+ *   - It is present in all three Alpha Serve OData feeds (214 rows), even though
+ *     it is out of MVP scope. That is evidence those feeds are configured for
+ *     someone else's requirements — it is NOT a reason to widen scope, and NOT a
+ *     reason to prefer or reject a feed.
+ *   - It is the ONLY project using a project-local level-1 type
+ *     (`Digital Project`, 18 items). The hierarchy-level selection rule exists
+ *     because of it, and that rule is retained on its own merits regardless of
+ *     DDTJG's status — see config/hierarchy.ts.
+ *   - Its statuses carry suffixes (`To Do - Epic`), which is why
+ *     STATUS_SUFFIXES_TO_STRIP exists. Also retained on its own merits.
+ *
+ * Treat its presence in a feed as noise the adapter filters out, and never as
+ * input to a coverage, scope or source-selection decision.
+ */
+export const NON_DRIVING_DEFERRED_KEYS: readonly string[] = ['DDTJG'] as const;
 
 /**
  * Projects investigated during discovery and deliberately excluded, with the
@@ -191,9 +212,18 @@ export const DISCOVERY_BASELINE = {
   initiatives: 36,                       // DERIVED: unchanged -- level-2 issues live in DDTGMPORT
   activeItems: 429,                      // DERIVED: 645 - 216
   itemsWithBothDates: 472,               // INHERITED -- re-measure
-  itemsWithAnyRag: 84,                   // INHERITED -- re-measure
-  itemsWithSpotNarrative: 8,             // INHERITED -- re-measure
-  itemsWithSpotIdField: 8,               // INHERITED -- re-measure
+  // The next three will now UNDER-REPORT BY DESIGN and drift hard upward.
+  // They were measured when config/fields.ts knew only Singapore's SPOT fields.
+  // SITE_SPOT_FIELDS now carries all 18 sites, so a census over the OData feed
+  // measured 424 items with a RAG, 299 with a narrative and 312 with a SPOT ID
+  // field, against 510 in-scope level-1 items. Those figures are NOT copied here:
+  // the census counts all-time level-1 items, which is not the same basis as the
+  // snapshot's, and inventing a baseline would silently weaken the gate. Drift is
+  // a WARN, so the gate still passes -- re-measure from the first sync taken
+  // after the fields.ts change and promote these to DERIVED then.
+  itemsWithAnyRag: 84,                   // INHERITED -- re-measure, expect ~5x
+  itemsWithSpotNarrative: 8,             // INHERITED -- re-measure, expect ~35x
+  itemsWithSpotIdField: 8,               // INHERITED -- re-measure, expect ~39x
   overdueActive: 67,                     // INHERITED -- re-measure
   staleActive90d: 17,                    // INHERITED -- re-measure
   // DERIVED: Americas 278 - (LA 86 + Covington 37 + Jaguariuna 18) = 137

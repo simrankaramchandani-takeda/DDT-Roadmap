@@ -2,7 +2,13 @@
 
 Executive decision-support view of Digital Data & Technology initiatives across Takeda's global manufacturing sites.
 
-**Status: Phase 1 (data pipeline) complete. No UI yet — by design.** The approved plan gates UI work behind the pipeline reproducing the discovery metrics. See [The gate](#the-gate).
+**Status: Phase 1 (data pipeline) complete. No UI yet.** The approved plan gates UI work behind the pipeline reproducing the discovery metrics. See [The gate](#the-gate).
+
+Phase 2 is designed but not built:
+[`reference/design-001-odata-adapter.md`](reference/design-001-odata-adapter.md) (ingestion from
+the OData feed) and [`reference/design-002-application.md`](reference/design-002-application.md)
+(the executive UI — architecture, screens, data contracts). The two tracks are decoupled by the
+snapshot contract, so UI work needs no feed access.
 
 ---
 
@@ -49,9 +55,11 @@ Jira REST v3  ──>  scripts/sync.ts  ──>  data/snapshot.json  ──>  (f
 > **Source under review.** The enterprise OData feed that already powers the DDTRoadmap
 > Power BI report exposes the same underlying Jira dataset, and is the likely strategic
 > source — see [`reference/adr-001-data-source.md`](reference/adr-001-data-source.md).
-> Jira REST remains the working source until `npm run probe-odata` answers E1–E3.
-> The transformation layer is source-agnostic, so the migration is confined to the client
-> and the fetch step of `scripts/sync.ts`.
+> E1–E3, E5 and E7 all now pass against a third feed that carries all 19 projects with
+> same-day data. **The remaining blocker is governance, not technology** (E4/E6/E8: approved
+> use, named data owner, and whether the credential is a service account). Jira REST remains
+> the working source and the comparison baseline. The transformation layer is source-agnostic,
+> so the migration is confined to the client and the fetch step of `scripts/sync.ts`.
 
 The app never queries Jira at request time. A scheduled sync writes a validated snapshot; everything downstream reads that. This keeps page loads fast, works offline for demos, keeps credentials out of the browser, and makes the data layer a single seam to swap for a database later.
 
@@ -99,6 +107,8 @@ Similarly, `Will not do` carries `statusCategory: done` in Jira, so cancellation
 
 **Risk** resolves in order: SPOT `Overall Status` → other authored RAG → derived from schedule, status, dependencies and staleness. Provenance is recorded on every item and always shown, so nobody mistakes an inferred status for a reported one. Thresholds are in `config/narrative.ts`.
 
+**The SPOT field ID varies by site.** `Overall Status`, `Overall Status Description` and `SPOT ID` are one business attribute each, but each site's SPOT integration was provisioned with its own custom field — 18 different `Overall Status` fields across 18 sites. `SITE_SPOT_FIELDS` in `config/fields.ts` maps them, and the candidate lists coalesce to a single normalised value carrying the source `fieldId` for audit. Exactly one candidate is ever populated per item. `DDTLNZ` and `DDTSNG` break the otherwise-adjacent ID numbering, so the table is transcribed from evidence, never derived — and `verify-snapshot` fails if a site's RAG starts resolving through an unexpected field.
+
 `resource-constraint` and `scope-risk` exist in the vocabulary but are **never inferred** — no field in the DDT schema evidences either. They are reachable only from an authored status.
 
 **Executive summaries** resolve in order: SPOT status description → Jira description → generated. Generation is deterministic template composition, **not an LLM call**: it must be reproducible per snapshot, auditable (every generated summary carries a `summaryBasis` listing the facts used), free, offline, and incapable of inventing a cause.
@@ -139,11 +149,11 @@ Out of MVP scope, but nothing here precludes it:
 
 ## Known gaps
 
-- **Only ~11% of items carry a site-authored status; ~1% carry a narrative.** This is the central finding, not a bug. The app derives a signal for the rest and labels provenance, and the coverage numbers are surfaced rather than hidden.
+- ~~**Only ~11% of items carry a site-authored status; ~1% carry a narrative.**~~ **Corrected 2026-08-07.** This was mostly a defect in `config/fields.ts`, not a data-quality finding. Every site authors its RAG and narrative in its *own* custom field, and config knew only Singapore's pair — so `SYNC_FIELDS` never requested the other seventeen and the pipeline could not see them. A census over the OData feed measured an authored RAG on **424 of 510 in-scope items (83%)** and a narrative on **299 (59%)**, every site non-zero. `SITE_SPOT_FIELDS` in `config/fields.ts` now carries the full mapping. The app still derives a signal for the remainder and always labels provenance. **The measured coverage figures pend a re-synced snapshot** — see the baseline note below.
 - **No milestone issue type, no `fixVersions`, no go-live field.** Go-live is the due date.
 - **`Flagged` (customfield_10387) is populated on zero items**, so blockers can only come from issue links. `verify-snapshot` reports if that changes.
 - **`customfield_11199` holds portfolio RAG but its name renders as "Asset ID".** Accepted by decision; worth raising with Jira admins, since the field silently becoming an actual asset ID would produce garbage.
 - **`SGP` = Singapore, `SNG` = Singen.** Codes are display-only; the model keys on Jira project key.
 - Six of 18 site codes are proposed rather than observed in the reference report.
-- **Six baseline metrics still carry pre-rebaseline values.** `itemsWithBothDates`, `itemsWithAnyRag`, `itemsWithSpotNarrative`, `itemsWithSpotIdField`, `overdueActive` and `staleActive90d` are cross-cutting counts that cannot be derived by subtraction, so they were carried over unchanged and will report drift until re-measured from a 19-project sync. Drift is a `WARN`, so the gate still passes. See `INHERITED_BASELINE_KEYS` in `config/projects.ts`.
-- **Lessines is a reconciliation gap.** Of the four deferred sites it is the only one present in the current Power BI report, so this app shows 18 sites where the incumbent shows 19 — a visible 75-item difference. See `DEFERRED_SITES` in `config/projects.ts`.
+- **Six baseline metrics still carry pre-rebaseline values.** `itemsWithBothDates`, `itemsWithAnyRag`, `itemsWithSpotNarrative`, `itemsWithSpotIdField`, `overdueActive` and `staleActive90d` are cross-cutting counts that cannot be derived by subtraction, so they were carried over unchanged and will report drift until re-measured from a 19-project sync. Drift is a `WARN`, so the gate still passes. See `INHERITED_BASELINE_KEYS` in `config/projects.ts`. Three of them — `itemsWithAnyRag`, `itemsWithSpotNarrative` and `itemsWithSpotIdField` — now **under-report by a wide margin**, because they were measured before `SITE_SPOT_FIELDS` existed. They were deliberately not overwritten with the OData census figures, which count a different basis.
+- **Four sites are deferred from MVP scope** — `DDTLA`, `DDTCOV`, `DDTJG`, `DDTLESS`. See `DEFERRED_SITES` in `config/projects.ts`. Which of them appear in the current Power BI report has not been established from the report itself, so no reconciliation claim is made either way.

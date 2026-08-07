@@ -1,0 +1,182 @@
+[
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "OPEN",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 12516,
+    "SCOPE_ID": 11331,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Intake Form",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13326,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Intake - 1 Pager",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13325,
+    "SCOPE_ID": 12609,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Timetable and Action Plan",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13328,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Script Adjustments",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13329,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Script Approval",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13330,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Draft (Storyboard / CR)",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13331,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Approval Storyboard / CR",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13332,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "First Draft / In Progress",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13333,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Feedback",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13334,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Upload to VC / Delivery",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13335,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Assessment - 5 Pager",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13336,
+    "SCOPE_ID": 12609,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "VBU Backlog",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13337,
+    "SCOPE_ID": 12609,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Discard",
+    "CATEGORY": "Done",
+    "ISSUE_STATUS_ID": 13338,
+    "SCOPE_ID": 12785,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "In Development",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13339,
+    "SCOPE_ID": 12609,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "次回改訂時宿題事項",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13364,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "DMS_WF開始作業中",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13372,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Vendor Pending",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13384,
+    "SCOPE_ID": 12792,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Cancelled",
+    "CATEGORY": "Done",
+    "ISSUE_STATUS_ID": 13488,
+    "SCOPE_ID": 12802,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Calibration",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13474,
+    "SCOPE_ID": 12881,
+    "SCOPE_TYPE": "PROJECT"
+  }
+]

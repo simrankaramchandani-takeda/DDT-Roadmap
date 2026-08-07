@@ -21,6 +21,33 @@
  *    0  Story / Task / Bug            -- operational detail, excluded
  *    1  Epic / Digital Project / ...   -- ROADMAP ITEM
  *    2  Initiative                     -- PORTFOLIO PROGRAMME
+ *
+ * WHAT HIERARCHY LEVEL IS AND IS NOT USED FOR
+ * -------------------------------------------
+ * These are two different jobs and conflating them has caused confusion:
+ *
+ *   SELECTION  -- which issues are roadmap items at all. This is what hierarchy
+ *                 level is for, and there is no substitute.
+ *
+ *   ALIGNMENT  -- which Initiative an item delivers. Hierarchy level plays NO
+ *                 part. The Polaris work item link is the authoritative
+ *                 relationship and always has been; see findInitiativeKey in
+ *                 src/lib/transform.ts. An item's alignment is determined purely
+ *                 by whether a link to a configured portfolio project exists.
+ *
+ * So hierarchy level is NON-BLOCKING for initiative alignment. A source that
+ * exposes issue links but not `issuetype.hierarchyLevel` -- which is the case for
+ * the Alpha Serve OData feeds, confirmed across three independently configured
+ * data sources -- can reconstruct the full initiative hierarchy without it.
+ * Evidence from the feed census on 2026-08-07: 509 Polaris links touching
+ * DDTGMPORT across 17 of 18 sites, in both directions.
+ *
+ * That same evidence shows why alignment cannot substitute for SELECTION: only
+ * 249 of 510 level-1 items carry a GMPORT link, so selecting on "has a link"
+ * would discard half the roadmap, and links also hang off level-0 issues. See
+ * reference/adr-001-data-source.md for the agreed mitigation (an explicit
+ * issue-type-ID to hierarchy-level registry) if a source without hierarchy level
+ * is ever adopted.
  */
 
 export const ROADMAP_ITEM_HIERARCHY_LEVEL = 1;
@@ -65,7 +92,9 @@ export function isUnexpectedLevel2TypeName(name: string): boolean {
  *   - The type is `Polaris work item link` (id 10319, implements / is implemented by).
  *   - Direction is NOT consistently curated: for a single Initiative, some site
  *     items appear as `inwardIssue` and others as `outwardIssue`. Matching must
- *     therefore be UNDIRECTED.
+ *     therefore be UNDIRECTED. Re-confirmed against the OData feed on 2026-08-07:
+ *     of 509 Polaris link rows touching DDTGMPORT, both directions are populated
+ *     in near-equal numbers. Honouring direction would drop about half of them.
  *   - Links can point at projects outside scope, so the counterpart must be
  *     checked for portfolio membership. This is newly load-bearing: in-scope
  *     items link to the four projects deferred from MVP scope, and those

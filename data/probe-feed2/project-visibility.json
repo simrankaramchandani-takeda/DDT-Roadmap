@@ -1,0 +1,28 @@
+{
+  "projectField": "PROJECT_KEY",
+  "totalIssues": 246,
+  "pagesFetched": 1,
+  "truncated": false,
+  "inScope": {
+    "DDTGMPORT": 37,
+    "DDTGC": 0,
+    "DDTMBO": 0,
+    "DDTTO": 0,
+    "DDTBP": 0,
+    "DDTLNZ": 0,
+    "DDTOSA": 73,
+    "DDTHIK": 69,
+    "DDTSG": 0,
+    "NEUCHDDT": 0,
+    "DDTBRY": 0,
+    "DDTSNG": 0,
+    "DDTTJ": 0,
+    "DDTORA": 0,
+    "DDTVAS": 0,
+    "DDTYAR": 17,
+    "DDTBA": 12,
+    "DDTNAU": 0,
+    "DDTBEK": 38
+  },
+  "outOfScope": {}
+}

@@ -23,6 +23,7 @@ import {
   PORTFOLIOS,
   RESOLVED_SITES,
 } from '@config/projects.js';
+import { SITE_SPOT_FIELDS } from '@config/fields.js';
 import { findDuplicateSiteCodes, UNCONFIRMED_SITE_CODES } from '@config/site-codes.js';
 import { snapshotSchema, UNALIGNED_INITIATIVE_KEY, type Snapshot } from '@/types/domain.js';
 
@@ -217,7 +218,64 @@ async function main(): Promise<void> {
       'Authored status coverage is low',
       `${coverage.withAnyRag} of ${coverage.itemsActive} (${pct(coverage.withAnyRag, coverage.itemsActive)}) ` +
         `carry a site-authored status; the rest are inferred or unreported. ` +
-        `Expected — this is the central data-quality finding, surfaced in the UI, not hidden.`,
+        `A feed census on 2026-08-07 resolved a RAG on 83% of in-scope level-1 items, so coverage ` +
+        `below 50% now suggests SITE_SPOT_FIELDS in config/fields.ts is missing a site's field ` +
+        `rather than a genuine authoring gap. Check the per-site table below.`,
+    );
+  }
+
+  // --- per-site SPOT field resolution ------------------------------------
+  //
+  // Each site authors its RAG in its OWN custom field (SITE_SPOT_FIELDS). The
+  // roadmap coalesces them into one normalised value, so a site whose field is
+  // renamed, retired or missing from config does not error -- it silently falls
+  // through to a derived signal and looks like a site that stopped reporting.
+  // This section is the canary for exactly that.
+  heading('Per-site SPOT field resolution');
+
+  const unexpectedFieldSites: string[] = [];
+  const noAuthoredSites: string[] = [];
+
+  for (const spotFields of SITE_SPOT_FIELDS) {
+    const siteItems = activeItems.filter((i) => i.siteKey === spotFields.siteKey);
+    if (siteItems.length === 0) continue;
+
+    const authored = siteItems.filter((i) => i.risk.authored?.fieldId);
+    const expectedId = `customfield_${spotFields.rag}`;
+    const resolvedIds = [...new Set(authored.map((i) => i.risk.authored!.fieldId))];
+    const throughExpected = authored.filter((i) => i.risk.authored!.fieldId === expectedId).length;
+
+    line(
+      `  ${spotFields.siteKey.padEnd(10)} ${String(authored.length).padStart(4)}/${String(siteItems.length).padEnd(4)} authored   ` +
+        `${pct(authored.length, siteItems.length).padStart(4)}   via ${resolvedIds.join(', ') || '—'}`,
+    );
+
+    if (authored.length === 0) noAuthoredSites.push(spotFields.siteKey);
+    else if (throughExpected === 0) unexpectedFieldSites.push(`${spotFields.siteKey} (expected ${expectedId}, got ${resolvedIds.join(', ')})`);
+  }
+
+  if (unexpectedFieldSites.length > 0) {
+    record(
+      'FAIL',
+      'Site RAG resolved through an unexpected field',
+      `${unexpectedFieldSites.join('; ')}. Either the site moved to a different SPOT field or ` +
+        `SITE_SPOT_FIELDS in config/fields.ts is wrong for it. Re-probe the site individually.`,
+    );
+  }
+
+  if (noAuthoredSites.length > 0) {
+    record(
+      'WARN',
+      'Sites with no authored status at all',
+      `${noAuthoredSites.join(', ')} resolved zero authored RAG values. Every site had non-zero ` +
+        `coverage in the 2026-08-07 census, so check that site's entry in SITE_SPOT_FIELDS before ` +
+        `concluding the site stopped reporting.`,
+    );
+  } else {
+    record(
+      'PASS',
+      'Every site resolves an authored status',
+      `all ${SITE_SPOT_FIELDS.length} configured per-site SPOT fields resolve at least one value`,
     );
   }
 
@@ -302,11 +360,62 @@ async function main(): Promise<void> {
   }
 
   // --- initiative linkage ------------------------------------------------
+  //
+  // Alignment is resolved ENTIRELY from issue links -- the Polaris work item link
+  // to a DDTGMPORT Initiative is the authoritative relationship, and hierarchy
+  // level plays no part in it. So a site-local item is a site that chose to
+  // deliver work outside the global programmes, never a hierarchy or ingestion
+  // defect. Roughly half the portfolio is site-local by design.
   heading('Initiative linkage');
   const aligned = activeItems.filter((i) => i.alignment === 'initiative').length;
   const local = activeItems.filter((i) => i.alignment === 'local').length;
   line(bar('Linked to a programme', aligned, coverage.itemsActive));
   line(bar('Site-local', local, coverage.itemsActive));
+
+  if (aligned + local !== activeItems.length) {
+    record(
+      'FAIL',
+      'Alignment does not reconcile',
+      `${aligned} aligned + ${local} local != ${activeItems.length} active items. Every item must be ` +
+        `exactly one of the two.`,
+    );
+  }
+
+  // Per-site split. A site at 100% local is an expected outcome, not a defect,
+  // but it must be NAMED -- otherwise it is indistinguishable from a link-matching
+  // regression when someone reads only the portfolio total.
+  line('');
+  line('  Per-site alignment (active items):');
+  const fullyLocalSites: string[] = [];
+  const fullyAlignedSites: string[] = [];
+
+  for (const site of RESOLVED_SITES) {
+    const siteItems = activeItems.filter((i) => i.siteKey === site.key);
+    if (siteItems.length === 0) continue;
+    const siteAligned = siteItems.filter((i) => i.alignment === 'initiative').length;
+    const siteLocal = siteItems.length - siteAligned;
+    line(
+      `    ${site.key.padEnd(10)} ${String(siteItems.length).padStart(4)} items   ` +
+        `${String(siteAligned).padStart(4)} aligned   ${String(siteLocal).padStart(4)} local   ` +
+        `${pct(siteLocal, siteItems.length).padStart(4)} local`,
+    );
+    if (siteAligned === 0) fullyLocalSites.push(site.key);
+    if (siteLocal === 0) fullyAlignedSites.push(site.key);
+  }
+
+  if (fullyLocalSites.length > 0) {
+    record(
+      'WARN',
+      'Sites with no initiative alignment',
+      `${fullyLocalSites.join(', ')} have zero items linked to a DDTGMPORT Initiative. This is an ` +
+        `EXPECTED delivery model, not a defect — DDTYAR was confirmed to have no Polaris work item ` +
+        `links at all in two independent OData feeds. Reported so it stays visible; raise with the ` +
+        `site if portfolio alignment was intended.`,
+    );
+  }
+  if (fullyAlignedSites.length > 0) {
+    line(`\n  Fully aligned (no site-local work): ${fullyAlignedSites.join(', ')}`);
+  }
 
   const withDates = initiatives.filter((i) => i.hasDates).length;
   const withoutDates = initiatives.filter((i) => !i.hasDates);

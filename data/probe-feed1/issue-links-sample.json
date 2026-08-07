@@ -1,0 +1,47 @@
+[
+  {
+    "ISSUE_ID": 16688120,
+    "ISSUE_KEY": "DDTORA-1",
+    "ISSUE_CREATED": "2025-01-08T09:15:28Z",
+    "TYPE": "Polaris work item link",
+    "DIRECTION": "Outward",
+    "LINKED_ISSUE_ID": 18107600,
+    "LINKED_ISSUE_KEY": "DDTGMPORT-4"
+  },
+  {
+    "ISSUE_ID": 17026734,
+    "ISSUE_KEY": "NEUCHDDT-8",
+    "ISSUE_CREATED": "2025-06-18T08:55:52Z",
+    "TYPE": "Polaris work item link",
+    "DIRECTION": "Outward",
+    "LINKED_ISSUE_ID": 18107597,
+    "LINKED_ISSUE_KEY": "DDTGMPORT-1"
+  },
+  {
+    "ISSUE_ID": 17055194,
+    "ISSUE_KEY": "NEUCHDDT-12",
+    "ISSUE_CREATED": "2025-06-30T07:24:36Z",
+    "TYPE": "Polaris work item link",
+    "DIRECTION": "Outward",
+    "LINKED_ISSUE_ID": 18107602,
+    "LINKED_ISSUE_KEY": "DDTGMPORT-6"
+  },
+  {
+    "ISSUE_ID": 17055996,
+    "ISSUE_KEY": "NEUCHDDT-15",
+    "ISSUE_CREATED": "2025-06-30T11:02:41Z",
+    "TYPE": "Polaris work item link",
+    "DIRECTION": "Outward",
+    "LINKED_ISSUE_ID": 18107605,
+    "LINKED_ISSUE_KEY": "DDTGMPORT-9"
+  },
+  {
+    "ISSUE_ID": 17055996,
+    "ISSUE_KEY": "NEUCHDDT-15",
+    "ISSUE_CREATED": "2025-06-30T11:02:41Z",
+    "TYPE": "Polaris work item link",
+    "DIRECTION": "Outward",
+    "LINKED_ISSUE_ID": 18107597,
+    "LINKED_ISSUE_KEY": "DDTGMPORT-1"
+  }
+]

@@ -1,0 +1,182 @@
+[
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "On Hold",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13438,
+    "SCOPE_ID": 12860,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "文書管理レビュー_QCレビュアー",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13036,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "文書管理レビュー_コーディネーターチェック",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13034,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "起案部門_ピアチェック",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13033,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "起案部門_文書作成",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13032,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "内容確認_廃止",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13030,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "フォルダー作成/文書取出対応中",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13029,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "教育配信対応依頼",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13039,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "LIMS改訂依頼済み",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13043,
+    "SCOPE_ID": 12616,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "EVALUATE",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13060,
+    "SCOPE_ID": 11752,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "REFINE",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13061,
+    "SCOPE_ID": 11752,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Ready for Development",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 13062,
+    "SCOPE_ID": 11752,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Deprioritized",
+    "CATEGORY": "Done",
+    "ISSUE_STATUS_ID": 12990,
+    "SCOPE_ID": 12588,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Waiting Requestor",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 12989,
+    "SCOPE_ID": 12588,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Backlog",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 12988,
+    "SCOPE_ID": 12588,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Scoping",
+    "CATEGORY": "To Do",
+    "ISSUE_STATUS_ID": 12987,
+    "SCOPE_ID": 12588,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Deprioritized",
+    "CATEGORY": "Done",
+    "ISSUE_STATUS_ID": 12986,
+    "SCOPE_ID": 12364,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Done",
+    "CATEGORY": "Done",
+    "ISSUE_STATUS_ID": 12977,
+    "SCOPE_ID": 11331,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "This work item is being actively worked on at the moment by the assignee.",
+    "ISSUE_STATUS_NAME": "In Progress",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 12976,
+    "SCOPE_ID": 11331,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://onetakeda.atlassian.net/",
+    "DESCRIPTION": "",
+    "ISSUE_STATUS_NAME": "Backlog",
+    "CATEGORY": "In Progress",
+    "ISSUE_STATUS_ID": 13174,
+    "SCOPE_ID": 12692,
+    "SCOPE_TYPE": "PROJECT"
+  }
+]

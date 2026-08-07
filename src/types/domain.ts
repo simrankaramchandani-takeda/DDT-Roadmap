@@ -310,6 +310,11 @@ export type SiteSummary = z.infer<typeof siteSummarySchema>;
 export type Coverage = z.infer<typeof coverageSchema>;
 export type Snapshot = z.infer<typeof snapshotSchema>;
 
-/** Synthetic initiative collecting items with no portfolio link (~248 items). */
+/**
+ * Synthetic initiative collecting items with no DDTGMPORT link -- 261 of 510
+ * in-scope level-1 items (51%) as measured on 2026-08-07, making it the largest
+ * single lane. `alignment: 'local'` is an expected delivery model, not a data
+ * gap; see buildUnalignedInitiative in src/lib/transform.ts.
+ */
 export const UNALIGNED_INITIATIVE_KEY = '__unaligned__';
 export const UNALIGNED_INITIATIVE_LABEL = 'Site-local initiatives';

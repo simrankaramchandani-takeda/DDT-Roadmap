@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="Alpha-Serve-Power-BI">
+            <EntityType Name="Issues">
+                <Key>
+                    <PropertyRef Name="ISSUE_ID"/>
+                </Key>
+                <Property Name="ISSUE_ID" Type="Edm.Int64"/>
+                <Property Name="ISSUE_KEY" Type="Edm.String"/>
+                <Property Name="ISSUE_TYPE_ID" Type="Edm.Int64"/>
+                <Property Name="ISSUE_TYPE_NAME" Type="Edm.String"/>
+                <Property Name="ISSUE_STATUS_ID" Type="Edm.Int64"/>
+                <Property Name="ISSUE_STATUS_NAME" Type="Edm.String"/>
+                <Property Name="SUMMARY" Type="Edm.String"/>
+                <Property Name="DESCRIPTION" Type="Edm.String"/>
+                <Property Name="PRIORITY" Type="Edm.String"/>
+                <Property Name="WATCHERS" Type="Edm.Int64"/>
+                <Property Name="WORK_RATIO" Type="Edm.Int64"/>
+                <Property Name="VOTES" Type="Edm.Int64"/>
+                <Property Name="RESOLUTION" Type="Edm.String"/>
+                <Property Name="PROJECT_ID" Type="Edm.Int64"/>
+                <Property Name="PROJECT_KEY" Type="Edm.String"/>
+                <Property Name="CURRENT_ASSIGNEE_ACCOUNT_ID" Type="Edm.String"/>
+                <Property Name="CURRENT_ASSIGNEE_NAME" Type="Edm.String"/>
+                <Property Name="CREATOR_ACCOUNT_ID" Type="Edm.String"/>
+                <Property Name="CREATOR_NAME" Type="Edm.String"/>
+                <Property Name="REPORTER_ACCOUNT_ID" Type="Edm.String"/>
+                <Property Name="REPORTER_NAME" Type="Edm.String"/>
+                <Property Name="ENVIRONMENT" Type="Edm.String"/>
+                <Property Name="CREATED" Type="Edm.DateTimeOffset"/>
+                <Property Name="UPDATED" Type="Edm.DateTimeOffset"/>
+                <Property Name="DUE_DATE" Type="Edm.DateTimeOffset"/>
+                <Property Name="RESOLUTION_DATE" Type="Edm.DateTimeOffset"/>
+                <Property Name="LAST_VIEWED" Type="Edm.DateTimeOffset"/>
+                <Property Name="SECURITY_LEVEL_NAME" Type="Edm.String"/>
+                <Property Name="STATUS_CATEGORY_CHANGE_DATE" Type="Edm.DateTimeOffset"/>
+                <Property Name="Due_Date_11724" Type="Edm.DateTimeOffset"/>
+                <Property Name="Due_Date_12911" Type="Edm.DateTimeOffset"/>
+                <Property Name="Due_Date_12722" Type="Edm.DateTimeOffset"/>
+                <Property Name="Due_Date_12720" Type="Edm.DateTimeOffset"/>
+                <Property Name="Due_Date_12715" Type="Edm.DateTimeOffset"/>
+                <Property Name="Due_Date_12718" Type="Edm.DateTimeOffset"/>
+                <Property Name="Linked_items_14800" Type="Edm.Double"/>
+                <Property Name="Overall_Status_24543" Type="Edm.String"/>
+                <Property Name="Overall_Status_25432" Type="Edm.String"/>
+                <Property Name="Overall_Status_26768" Type="Edm.String"/>
+                <Property Name="Overall_Status_23822" Type="Edm.String"/>
+                <Property Name="Overall_Status_23829" Type="Edm.String"/>
+                <Property Name="Overall_Status_23816" Type="Edm.String"/>
+                <Property Name="Overall_Status_24246" Type="Edm.String"/>
+                <Property Name="Overall_Status_24254" Type="Edm.String"/>
+                <Property Name="Overall_Status_24256" Type="Edm.String"/>
+                <Property Name="Overall_Status_24258" Type="Edm.String"/>
+                <Property Name="Overall_Status_24260" Type="Edm.String"/>
+                <Property Name="Overall_Status_24262" Type="Edm.String"/>
+                <Property Name="Overall_Status_24264" Type="Edm.String"/>
+                <Property Name="Overall_Status_24266" Type="Edm.String"/>
+                <Property Name="Overall_Status_24268" Type="Edm.String"/>
+                <Property Name="Overall_Status_24270" Type="Edm.String"/>
+                <Property Name="Overall_Status_24272" Type="Edm.String"/>
+                <Property Name="Overall_Status_23341" Type="Edm.String"/>
+                <Property Name="Overall_Status_26614" Type="Edm.String"/>
+                <Property Name="Overall_status_26666" Type="Edm.String"/>
+                <Property Name="Start_date_10412" Type="Edm.DateTimeOffset"/>
+                <Property Name="State_17049" Type="Edm.String"/>
+                <Property Name="Status_14722" Type="Edm.String"/>
+                <Property Name="Status_11827" Type="Edm.String"/>
+                <Property Name="Target_date_13311" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_13310" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_13306" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_13305" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_implementation_13266" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_implementation_13318" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_implementation_13312" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_implementation_13314" Type="Edm.DateTimeOffset"/>
+                <Property Name="Target_date_implementation_13300" Type="Edm.DateTimeOffset"/>
+            </EntityType>
+            <EntityType Name="IssueStatuses">
+                <Key>
+                    <PropertyRef Name="ISSUE_STATUS_ID"/>
+                </Key>
+                <Property Name="ISSUE_STATUS_ID" Type="Edm.Int64"/>
+                <Property Name="ISSUE_STATUS_NAME" Type="Edm.String"/>
+                <Property Name="DESCRIPTION" Type="Edm.String"/>
+                <Property Name="CATEGORY" Type="Edm.String"/>
+                <Property Name="ICON_URL" Type="Edm.String"/>
+                <Property Name="SCOPE_TYPE" Type="Edm.String"/>
+                <Property Name="SCOPE_ID" Type="Edm.Int64"/>
+            </EntityType>
+            <EntityType Name="IssueTypes">
+                <Key>
+                    <PropertyRef Name="ISSUE_TYPE_ID"/>
+                </Key>
+                <Property Name="ISSUE_TYPE_ID" Type="Edm.Int64"/>
+                <Property Name="ISSUE_TYPE_NAME" Type="Edm.String"/>
+                <Property Name="DESCRIPTION" Type="Edm.String"/>
+                <Property Name="IS_SUBTASK" Type="Edm.Boolean"/>
+                <Property Name="ICON_URL" Type="Edm.String"/>
+                <Property Name="SCOPE_TYPE" Type="Edm.String"/>
+                <Property Name="SCOPE_ID" Type="Edm.Int64"/>
+            </EntityType>
+            <EntityType Name="IssueLinks">
+                <Property Name="ISSUE_ID" Type="Edm.Int64"/>
+                <Property Name="ISSUE_KEY" Type="Edm.String"/>
+                <Property Name="ISSUE_CREATED" Type="Edm.DateTimeOffset"/>
+                <Property Name="TYPE" Type="Edm.String"/>
+                <Property Name="DIRECTION" Type="Edm.String"/>
+                <Property Name="LINKED_ISSUE_ID" Type="Edm.Int64"/>
+                <Property Name="LINKED_ISSUE_KEY" Type="Edm.String"/>
+            </EntityType>
+            <EntityContainer Name="Container">
+                <EntitySet EntityType="Alpha-Serve-Power-BI.Issues" Name="Issues">
+                    <Annotation Term="Org.OData.Capabilities.V1.CountRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Countable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.SkipSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.ExpandRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Expandable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.IndexableByKey"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.NavigationRestrictions">
+                        <Record>
+                            <PropertyValue Property="Navigability">
+                                <EnumMember>Org.OData.Capabilities.V1.NavigationType/None</EnumMember>
+                            </PropertyValue>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.FilterFunctions">
+                        <Collection>
+                            <String>none</String>
+                        </Collection>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.FilterRestrictions">
+                        <Record>
+                            <PropertyValue Property="NonFilterableProperties">
+                                <Collection>
+                                    <PropertyPath>ISSUE_ID</PropertyPath>
+                                    <PropertyPath>ISSUE_KEY</PropertyPath>
+                                    <PropertyPath>ISSUE_TYPE_ID</PropertyPath>
+                                    <PropertyPath>ISSUE_TYPE_NAME</PropertyPath>
+                                    <PropertyPath>ISSUE_STATUS_ID</PropertyPath>
+                                    <PropertyPath>ISSUE_STATUS_NAME</PropertyPath>
+                                    <PropertyPath>SUMMARY</PropertyPath>
+                                    <PropertyPath>DESCRIPTION</PropertyPath>
+                                    <PropertyPath>PRIORITY</PropertyPath>
+                                    <PropertyPath>WATCHERS</PropertyPath>
+                                    <PropertyPath>WORK_RATIO</PropertyPath>
+                                    <PropertyPath>VOTES</PropertyPath>
+                                    <PropertyPath>RESOLUTION</PropertyPath>
+                                    <PropertyPath>PROJECT_ID</PropertyPath>
+                                    <PropertyPath>PROJECT_KEY</PropertyPath>
+                                    <PropertyPath>CURRENT_ASSIGNEE_ACCOUNT_ID</PropertyPath>
+                                    <PropertyPath>CURRENT_ASSIGNEE_NAME</PropertyPath>
+                                    <PropertyPath>CREATOR_ACCOUNT_ID</PropertyPath>
+                                    <PropertyPath>CREATOR_NAME</PropertyPath>
+                                    <PropertyPath>REPORTER_ACCOUNT_ID</PropertyPath>
+                                    <PropertyPath>REPORTER_NAME</PropertyPath>
+                                    <PropertyPath>ENVIRONMENT</PropertyPath>
+                                    <PropertyPath>UPDATED</PropertyPath>
+                                    <PropertyPath>DUE_DATE</PropertyPath>
+                                    <PropertyPath>RESOLUTION_DATE</PropertyPath>
+                                    <PropertyPath>LAST_VIEWED</PropertyPath>
+                                    <PropertyPath>SECURITY_LEVEL_NAME</PropertyPath>
+                                    <PropertyPath>STATUS_CATEGORY_CHANGE_DATE</PropertyPath>
+                                    <PropertyPath>Due_Date_11724</PropertyPath>
+                                    <PropertyPath>Due_Date_12911</PropertyPath>
+                                    <PropertyPath>Due_Date_12722</PropertyPath>
+                                    <PropertyPath>Due_Date_12720</PropertyPath>
+                                    <PropertyPath>Due_Date_12715</PropertyPath>
+                                    <PropertyPath>Due_Date_12718</PropertyPath>
+                                    <PropertyPath>Linked_items_14800</PropertyPath>
+                                    <PropertyPath>Overall_Status_24543</PropertyPath>
+                                    <PropertyPath>Overall_Status_25432</PropertyPath>
+                                    <PropertyPath>Overall_Status_26768</PropertyPath>
+                                    <PropertyPath>Overall_Status_23822</PropertyPath>
+                                    <PropertyPath>Overall_Status_23829</PropertyPath>
+                                    <PropertyPath>Overall_Status_23816</PropertyPath>
+                                    <PropertyPath>Overall_Status_24246</PropertyPath>
+                                    <PropertyPath>Overall_Status_24254</PropertyPath>
+                                    <PropertyPath>Overall_Status_24256</PropertyPath>
+                                    <PropertyPath>Overall_Status_24258</PropertyPath>
+                                    <PropertyPath>Overall_Status_24260</PropertyPath>
+                                    <PropertyPath>Overall_Status_24262</PropertyPath>
+                                    <PropertyPath>Overall_Status_24264</PropertyPath>
+                                    <PropertyPath>Overall_Status_24266</PropertyPath>
+                                    <PropertyPath>Overall_Status_24268</PropertyPath>
+                                    <PropertyPath>Overall_Status_24270</PropertyPath>
+                                    <PropertyPath>Overall_Status_24272</PropertyPath>
+                                    <PropertyPath>Overall_Status_23341</PropertyPath>
+                                    <PropertyPath>Overall_Status_26614</PropertyPath>
+                                    <PropertyPath>Overall_status_26666</PropertyPath>
+                                    <PropertyPath>Start_date_10412</PropertyPath>
+                                    <PropertyPath>State_17049</PropertyPath>
+                                    <PropertyPath>Status_14722</PropertyPath>
+                                    <PropertyPath>Status_11827</PropertyPath>
+                                    <PropertyPath>Target_date_13311</PropertyPath>
+                                    <PropertyPath>Target_date_13310</PropertyPath>
+                                    <PropertyPath>Target_date_13306</PropertyPath>
+                                    <PropertyPath>Target_date_13305</PropertyPath>
+                                    <PropertyPath>Target_date_implementation_13266</PropertyPath>
+                                    <PropertyPath>Target_date_implementation_13318</PropertyPath>
+                                    <PropertyPath>Target_date_implementation_13312</PropertyPath>
+                                    <PropertyPath>Target_date_implementation_13314</PropertyPath>
+                                    <PropertyPath>Target_date_implementation_13300</PropertyPath>
+                                </Collection>
+                            </PropertyValue>
+                            <PropertyValue Property="FilterExpressionRestrictions">
+                                <Collection>
+                                    <Record>
+                                        <PropertyValue Property="Property" String="CREATED"/>
+                                        <PropertyValue Property="AllowedExpressions" String="MultiRange"/>
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Sortable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Supported"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.ComputeSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.SearchRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Searchable"/>
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet EntityType="Alpha-Serve-Power-BI.IssueStatuses" Name="IssueStatuses">
+                    <Annotation Term="Org.OData.Capabilities.V1.CountRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Countable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.SkipSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.ExpandRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Expandable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.IndexableByKey"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.NavigationRestrictions">
+                        <Record>
+                            <PropertyValue Property="Navigability">
+                                <EnumMember>Org.OData.Capabilities.V1.NavigationType/None</EnumMember>
+                            </PropertyValue>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.FilterRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Filterable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Sortable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Supported"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.ComputeSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.SearchRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Searchable"/>
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet EntityType="Alpha-Serve-Power-BI.IssueTypes" Name="IssueTypes">
+                    <Annotation Term="Org.OData.Capabilities.V1.CountRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Countable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.SkipSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.ExpandRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Expandable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.IndexableByKey"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.NavigationRestrictions">
+                        <Record>
+                            <PropertyValue Property="Navigability">
+                                <EnumMember>Org.OData.Capabilities.V1.NavigationType/None</EnumMember>
+                            </PropertyValue>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.FilterRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Filterable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Sortable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Supported"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.ComputeSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.SearchRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Searchable"/>
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet EntityType="Alpha-Serve-Power-BI.IssueLinks" Name="IssueLinks">
+                    <Annotation Term="Org.OData.Capabilities.V1.CountRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Countable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.SkipSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.ExpandRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Expandable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.IndexableByKey"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.NavigationRestrictions">
+                        <Record>
+                            <PropertyValue Property="Navigability">
+                                <EnumMember>Org.OData.Capabilities.V1.NavigationType/None</EnumMember>
+                            </PropertyValue>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.FilterFunctions">
+                        <Collection>
+                            <String>none</String>
+                        </Collection>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.FilterRestrictions">
+                        <Record>
+                            <PropertyValue Property="NonFilterableProperties">
+                                <Collection>
+                                    <PropertyPath>ISSUE_ID</PropertyPath>
+                                    <PropertyPath>ISSUE_KEY</PropertyPath>
+                                    <PropertyPath>TYPE</PropertyPath>
+                                    <PropertyPath>DIRECTION</PropertyPath>
+                                    <PropertyPath>LINKED_ISSUE_ID</PropertyPath>
+                                    <PropertyPath>LINKED_ISSUE_KEY</PropertyPath>
+                                </Collection>
+                            </PropertyValue>
+                            <PropertyValue Property="FilterExpressionRestrictions">
+                                <Collection>
+                                    <Record>
+                                        <PropertyValue Property="Property" String="ISSUE_CREATED"/>
+                                        <PropertyValue Property="AllowedExpressions" String="MultiRange"/>
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Sortable"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Supported"/>
+                        </Record>
+                    </Annotation>
+                    <Annotation Bool="false" Term="Org.OData.Capabilities.V1.ComputeSupported"/>
+                    <Annotation Term="Org.OData.Capabilities.V1.SearchRestrictions">
+                        <Record>
+                            <PropertyValue Bool="false" Property="Searchable"/>
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+            </EntityContainer>
+            <Annotations Target="Alpha-Serve-Power-BI.Container">
+                <Annotation Bool="false" Term="Org.OData.Capabilities.V1.AsynchronousRequestsSupported"/>
+                <Annotation Bool="false" Term="Org.OData.Capabilities.V1.CrossJoinSupported"/>
+                <Annotation Term="Org.OData.Capabilities.V1.SelectSupport">
+                    <Record>
+                        <PropertyValue Bool="false" Property="Supported"/>
+                    </Record>
+                </Annotation>
+                <Annotation Bool="false" Term="Org.OData.Capabilities.V1.BatchSupported"/>
+                <Annotation Bool="false" Term="Org.OData.Capabilities.V1.QuerySegmentSupported"/>
+                <Annotation Bool="false" Term="Org.OData.Capabilities.V1.KeyAsSegmentSupported"/>
+                <Annotation Bool="false" Term="Org.OData.Capabilities.V1.AnnotationValuesInQuerySupported"/>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

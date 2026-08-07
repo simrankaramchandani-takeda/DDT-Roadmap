@@ -1,0 +1,182 @@
+[
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10308?size=medium",
+    "DESCRIPTION": "",
+    "ISSUE_TYPE_ID": 13290,
+    "ISSUE_TYPE_NAME": "Technical Story",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 13002,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10316?size=medium",
+    "DESCRIPTION": "Subtasks track small pieces of work that are part of a larger task.",
+    "ISSUE_TYPE_ID": 13416,
+    "ISSUE_TYPE_NAME": "Subtask",
+    "IS_SUBTASK": true,
+    "SCOPE_ID": 13143,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10316?size=medium",
+    "DESCRIPTION": "Subtasks track small pieces of work that are part of a larger task.",
+    "ISSUE_TYPE_ID": 11095,
+    "ISSUE_TYPE_NAME": "Subtask",
+    "IS_SUBTASK": true,
+    "SCOPE_ID": 11380,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+    "DESCRIPTION": "Tasks track small, distinct pieces of work.",
+    "ISSUE_TYPE_ID": 13268,
+    "ISSUE_TYPE_NAME": "Task",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12995,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+    "DESCRIPTION": "Tasks track small, distinct pieces of work.",
+    "ISSUE_TYPE_ID": 13370,
+    "ISSUE_TYPE_NAME": "Task",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 13080,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10322?size=medium",
+    "DESCRIPTION": "",
+    "ISSUE_TYPE_ID": 12463,
+    "ISSUE_TYPE_NAME": "Idea",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12364,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium",
+    "DESCRIPTION": "Stories track functionality or features expressed as user goals.",
+    "ISSUE_TYPE_ID": 13480,
+    "ISSUE_TYPE_NAME": "Story",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 13273,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10304?size=medium",
+    "DESCRIPTION": "Use esse issue type pra abrir um request para o robô de CPV",
+    "ISSUE_TYPE_ID": 12207,
+    "ISSUE_TYPE_NAME": "CPV Request",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12074,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+    "DESCRIPTION": "Bugs track problems or errors.",
+    "ISSUE_TYPE_ID": 12158,
+    "ISSUE_TYPE_NAME": "Bug",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12154,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+    "DESCRIPTION": "Bugs track problems or errors.",
+    "ISSUE_TYPE_ID": 21728,
+    "ISSUE_TYPE_NAME": "Bug",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 22226,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+    "DESCRIPTION": "Bugs track problems or errors.",
+    "ISSUE_TYPE_ID": 13568,
+    "ISSUE_TYPE_NAME": "Bug",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 13345,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium",
+    "DESCRIPTION": "Stories track functionality or features expressed as user goals.",
+    "ISSUE_TYPE_ID": 13206,
+    "ISSUE_TYPE_NAME": "Story",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12967,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10316?size=medium",
+    "DESCRIPTION": "Subtasks track small pieces of work that are part of a larger task.",
+    "ISSUE_TYPE_ID": 13766,
+    "ISSUE_TYPE_NAME": "Subtask",
+    "IS_SUBTASK": true,
+    "SCOPE_ID": 13637,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+    "DESCRIPTION": "Tasks track small, distinct pieces of work.",
+    "ISSUE_TYPE_ID": 12493,
+    "ISSUE_TYPE_NAME": "Task",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12396,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10306?size=medium",
+    "DESCRIPTION": "",
+    "ISSUE_TYPE_ID": 14827,
+    "ISSUE_TYPE_NAME": "Form",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 15154,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10316?size=medium",
+    "DESCRIPTION": "Subtasks track small pieces of work that are part of a larger task.",
+    "ISSUE_TYPE_ID": 22043,
+    "ISSUE_TYPE_NAME": "Subtask",
+    "IS_SUBTASK": true,
+    "SCOPE_ID": 23071,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium",
+    "DESCRIPTION": "Stories track functionality or features expressed as user goals.",
+    "ISSUE_TYPE_ID": 13182,
+    "ISSUE_TYPE_NAME": "Story",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 12934,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+    "DESCRIPTION": "Epics track collections of related bugs, stories, and tasks.",
+    "ISSUE_TYPE_ID": 14598,
+    "ISSUE_TYPE_NAME": "Epic",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 14924,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10308?size=medium",
+    "DESCRIPTION": "A Task that needs a external factor to be completed ",
+    "ISSUE_TYPE_ID": 15056,
+    "ISSUE_TYPE_NAME": "Dependency",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 13143,
+    "SCOPE_TYPE": "PROJECT"
+  },
+  {
+    "ICON_URL": "https://api.atlassian.com/ex/jira/388aaa4a-3ba1-42e6-82ac-798671ba2e3e/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+    "DESCRIPTION": "",
+    "ISSUE_TYPE_ID": 18383,
+    "ISSUE_TYPE_NAME": "Bug/Fix",
+    "IS_SUBTASK": false,
+    "SCOPE_ID": 17590,
+    "SCOPE_TYPE": "PROJECT"
+  }
+]

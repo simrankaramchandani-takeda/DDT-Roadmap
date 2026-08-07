@@ -8,6 +8,9 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
     "sync": "tsx scripts/sync.ts",
     "verify-snapshot": "tsx scripts/verify-snapshot.ts",
     "probe-odata": "tsx scripts/probe-odata.ts",
@@ -16,10 +19,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "next": "^16.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"

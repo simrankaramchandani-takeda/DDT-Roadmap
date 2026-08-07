@@ -19,8 +19,8 @@ import {
   FIELD_FISCAL_YEAR,
   FIELD_FLAGGED_UNUSABLE,
   FIELD_PORTFOLIO_RAG,
-  FIELD_SPOT_DESCRIPTION,
   FIELD_START_DATE,
+  SPOT_DESCRIPTION_FIELD_CANDIDATES,
   FIELD_TARGET_END,
   FIELD_TARGET_START,
 } from '@config/fields.js';
@@ -212,6 +212,19 @@ function daysSince(timestamp: string | undefined, asOf: string): number {
   return Math.max(0, daysBetween(date, asOf));
 }
 
+/**
+ * Resolves the SPOT narrative from whichever of the per-site candidate fields is
+ * populated. Returns the first candidate that actually parses, so a present but
+ * empty field does not mask a populated one further down the list.
+ */
+function findSpotDescription(fields: JiraIssue['fields']): ReturnType<typeof parseSpotDescription> {
+  for (const fieldId of SPOT_DESCRIPTION_FIELD_CANDIDATES) {
+    const parsed = parseSpotDescription(fields[fieldId]);
+    if (parsed) return parsed;
+  }
+  return undefined;
+}
+
 export function transformItem(
   issue: JiraIssue,
   context: TransformContext,
@@ -274,7 +287,10 @@ export function transformItem(
     asOf: context.asOf,
   });
 
-  const spot = parseSpotDescription(fields[FIELD_SPOT_DESCRIPTION]);
+  // The SPOT narrative field ID varies by site, so coalesce the candidates the
+  // same way the RAG is resolved. At most one is populated per item (asserted by
+  // verify-snapshot), so the first that parses is the only one that parses.
+  const spot = findSpotDescription(fields);
   for (const label of spot?.unmappedLabels ?? []) {
     context.warnings.push(
       `${issue.key} SPOT Description contains an unmapped row "${label}"; ` +
@@ -415,8 +431,25 @@ export function transformInitiative(
 }
 
 /**
- * The synthetic lane for items with no portfolio link -- roughly 248 items.
- * Modelled as an initiative so the UI has one uniform lane type.
+ * The lane for site-local initiatives -- items with no link to a DDTGMPORT
+ * Initiative. Modelled as an initiative so the UI has one uniform lane type.
+ *
+ * `alignment: 'local'` IS A FIRST-CLASS, EXPECTED STATE, NOT A DATA GAP. Measured
+ * on 2026-08-07, 261 of 510 in-scope level-1 items (51%) are site-local, so this
+ * lane is the largest single lane in the portfolio -- it is normal for a site to
+ * run work that does not roll up to a global programme. Do not report these as
+ * unlinked, missing or broken, and do not exclude them from site or regional
+ * totals.
+ *
+ * The distribution is wide and both extremes are real:
+ *   - `DDTYAR` (Yaroslavl) is 17 of 17 site-local -- it has NO GMPORT linkage at
+ *     all, confirmed independently in two OData feeds. A site reporting zero
+ *     initiative alignment is therefore a legitimate outcome and must not be
+ *     treated as a link-matching regression.
+ *   - `DDTVAS` (Vashi) is the opposite: 15 of 15 aligned, zero local.
+ *
+ * verify-snapshot reports the per-site split and names any fully-site-local site
+ * so the condition stays visible rather than being inferred from a total.
  */
 export function buildUnalignedInitiative(
   items: readonly RoadmapItem[],
@@ -431,8 +464,9 @@ export function buildUnalignedInitiative(
     portfolioKey: '',
     summary: UNALIGNED_INITIATIVE_LABEL,
     description:
-      'Site-led work not linked to a global programme in the portfolio. ' +
-      'These items have no Polaris work item link to a portfolio Initiative.',
+      'Site-led work delivered outside the global portfolio programmes. These items ' +
+      'have no Polaris work item link to a DDTGMPORT Initiative, which is an expected ' +
+      'delivery model rather than missing data.',
     status: { raw: 'n/a', phase: 'execute', category: 'in-progress' },
     ...(derived.start ? { start: derived.start } : {}),
     ...(derived.end ? { end: derived.end } : {}),
@@ -441,8 +475,8 @@ export function buildUnalignedInitiative(
     risk,
     narrative: {
       executiveSummary:
-        `${items.length} site-led projects across ${siteRollup.length} sites that are not ` +
-        `linked to a global programme.`,
+        `${items.length} site-led projects across ${siteRollup.length} sites, delivered ` +
+        `outside the global portfolio programmes.`,
       summarySource: 'generated',
       summaryBasis: [`itemCount=${items.length}`, `siteCount=${siteRollup.length}`],
     },
