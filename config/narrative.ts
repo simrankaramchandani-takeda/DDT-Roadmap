@@ -33,12 +33,20 @@ export const RISK_LEVEL_LABELS: Readonly<Record<RiskLevel, string>> = {
   unreported: 'No Status Reported',
 } as const;
 
+/** The five colour tokens the Power BI report established. Closed set by design. */
+export const PALETTE_TOKENS = ['green', 'amber', 'red', 'blue', 'grey'] as const;
+export type PaletteToken = (typeof PALETTE_TOKENS)[number];
+
 /**
  * Maps to the five-token palette already established by the Power BI report, so
  * the visual vocabulary carries over. `Unassigned` (grey) is a first-class state
  * there and stays one here.
+ *
+ * Typed to the union rather than `string` so the UI can bind a token to a CSS
+ * custom property without a cast, and so adding a sixth token is a deliberate
+ * change here rather than a silent one at a call site.
  */
-export const RISK_LEVEL_PALETTE_TOKEN: Readonly<Record<RiskLevel, string>> = {
+export const RISK_LEVEL_PALETTE_TOKEN: Readonly<Record<RiskLevel, PaletteToken>> = {
   'on-track': 'green',
   monitor: 'amber',
   attention: 'red',

@@ -435,6 +435,29 @@ const ITEMS: RoadmapItem[] = [
     daysSinceUpdate: 38,
   }),
 
+  // --- CROSS-SITE MARKER COLLISION. On the Global Roadmap a lane's markers come
+  //     from `siteRollup`, which is already one entry per site (its EARLIEST
+  //     go-live) -- so several go-lives at ONE site collapse before they ever
+  //     reach the chart. The count badge is therefore exercised only when two
+  //     DIFFERENT sites land close together. Singen's 20 Nov go-live sits 10 days
+  //     from Grange Castle's 10 Nov, inside the collapse threshold.
+  item({
+    key: 'DDTSNG-12',
+    siteKey: 'DDTSNG',
+    title: 'MES line integration',
+    initiativeKey: 'DDTGMPORT-12',
+    start: '2026-05-01',
+    end: '2026-11-20',
+    fiscalYears: ['FY26'],
+    phase: 'execute',
+    statusRaw: 'Execute',
+    category: 'in-progress',
+    risk: onTrackSpot('customfield_23341'),
+    narrative: { executiveSummary: 'Tracking to a November go-live.', summarySource: 'generated', summaryBasis: ['goLive=2026-11-20'] },
+    updatedAt: '2026-08-04T09:00:00.000Z',
+    daysSinceUpdate: 3,
+  }),
+
   // --- Phoenix items. DDTHIK-38 is the item ADR-001 cites as appearing on the
   //     OUTWARD side of its Polaris link, which is why matching is undirected.
   item({
