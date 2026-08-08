@@ -6,6 +6,12 @@
  *   2. Other authored RAG (Health etc.) -> provenance 'reported'
  *   3. Derived from schedule and status -> provenance 'inferred'
  *
+ * TWO APPROVED EXCEPTIONS override an authored RAG, both because a workflow
+ * transition is a harder and more current fact than a status field nobody has
+ * revisited:
+ *   - A terminal status (`complete` / `cancelled`) wins outright.
+ *   - A `hold` status imposes a FLOOR of `monitor`. See "THE HOLD FLOOR" below.
+ *
  * Steps 1-2 cover only ~11% of items, so step 3 carries the portfolio. The
  * governing constraint: NEVER assert a cause the data does not evidence. There
  * is no field anywhere in the DDT schema that indicates a resource constraint or
@@ -131,6 +137,25 @@ function deriveSignals(input: RiskInput): { level: RiskLevel; reasons: RiskReaso
 
   let level: RiskLevel = 'on-track';
   let overdueDays = 0;
+
+  // --- suspended ------------------------------------------------------------
+  // This is the case that makes a dedicated `hold` phase worth having. Without
+  // this floor, a held project that was updated recently and whose go-live is
+  // still in the future derives as ON TRACK -- the precise false reassurance this
+  // application exists to prevent. Held work is not progressing, whatever its
+  // dates say.
+  //
+  // A floor, never a cap: `worseRisk` cannot lower an overdue or blocked signal,
+  // so a held project that is ALSO 200 days late still reads as attention.
+  //
+  // Placed first so `on-hold` leads the reason list -- being on hold is the
+  // defining fact about the item, and the attention list shows the first reason.
+  if (status.phase === 'hold') {
+    level = worseRisk(level, 'monitor');
+    reasons.push(
+      reason('on-hold', `Work is on hold; Jira status is ${status.raw}. Progress is suspended.`),
+    );
+  }
 
   // --- schedule: overdue go-live -------------------------------------------
   if (end) {
@@ -268,11 +293,31 @@ export function assessRisk(input: RiskInput): RiskAssessment {
   }
 
   if (input.authoredRag) {
-    const { level, authored, isSpot } = input.authoredRag;
+    const { level: authoredLevel, authored, isSpot } = input.authoredRag;
 
     // Recompute schedule facts for context, but do not let them change the level.
     const derived = deriveSignals(input);
     const supporting = derived.reasons.filter((r) => r.code !== 'no-immediate-action');
+
+    // THE HOLD FLOOR -- an approved business rule, not an implementation detail.
+    //
+    // A project in a Hold status reports a MINIMUM health of Monitor, even when the
+    // site has authored Green. This is the one derived signal permitted to move an
+    // authored level, and it is deliberate:
+    //
+    //   - Workflow state is a stronger and more current signal than a RAG field
+    //     that may not have been revisited since the work was suspended.
+    //   - A project explicitly moved to Hold must never present as Green.
+    //   - An authored Red still wins: `worseRisk` is a floor, never a cap.
+    //   - Provenance is untouched, so the reader still sees that a site authored the
+    //     status -- the floor changes the level, never the evidence trail.
+    //
+    // It is the same precedence the terminal rule above applies, for the same
+    // reason. Without it, a held project that was updated yesterday and whose
+    // go-live is still months away reports as ON TRACK, which is the precise false
+    // reassurance this application exists to prevent.
+    const level =
+      input.status.phase === 'hold' ? worseRisk(authoredLevel, 'monitor') : authoredLevel;
 
     return {
       level,

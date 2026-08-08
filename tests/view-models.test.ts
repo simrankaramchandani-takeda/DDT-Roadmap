@@ -15,9 +15,11 @@ import { buildGlobalRoadmapModel } from '@/lib/view-models/roadmap.js';
 import { buildSiteModel, buildSiteIndex } from '@/lib/view-models/site.js';
 import { buildInitiativeModel, buildInitiativeIndex } from '@/lib/view-models/initiative.js';
 import { buildProjectModel } from '@/lib/view-models/project.js';
+import { buildRegionModel, buildRegionIndex } from '@/lib/view-models/region.js';
+import { buildDataModel } from '@/lib/view-models/data.js';
 import { HEALTH_DISPLAY } from '@/lib/view-models/health.js';
 import { UNALIGNED_INITIATIVE_KEY } from '@/types/domain.js';
-import { RISK_LEVELS } from '@config/narrative.js';
+import { REASON_LABELS, RISK_LEVELS, RISK_LEVEL_LABELS } from '@config/narrative.js';
 
 const S = FIXTURE_SNAPSHOT;
 const ALL = { risk: 'all', scope: 'all' } as const;
@@ -271,6 +273,19 @@ describe('site model', () => {
     expect(plotted.length + mbo.noDates.length).toBe(mbo.itemCount);
   });
 
+  it('keeps the programme on a no-dates item, which the chart cannot show', () => {
+    // A no-dates item has no timeline row, so the table twin is the only surface
+    // that can state which programme it belongs to.
+    const mbo = buildSiteModel(S, 'DDTMBO', ALL)!;
+    const labels = new Set(mbo.groups.map((g) => (g.isLocal ? 'Site-led' : g.label)));
+
+    expect(mbo.noDates.length).toBeGreaterThan(0);
+    for (const row of mbo.noDates) {
+      expect(row.groupLabel).toBeTruthy();
+      expect(labels.has(row.groupLabel)).toBe(true);
+    }
+  });
+
   it('renders a go-live-only item as a point rather than a bar', () => {
     const hik = buildSiteModel(S, 'DDTHIK', ALL)!;
     const rows = hik.groups.flatMap((g) => g.rows);
@@ -297,6 +312,12 @@ describe('initiative model', () => {
     const rows = model.siteGroups.flatMap((g) => g.rows);
     expect(rows.length + model.noDates.length).toBe(model.itemCount);
     expect(model.siteCount).toBe(model.siteGroups.length);
+
+    // A group header counts EVERY item at the site, not just the plottable ones --
+    // otherwise a lane with two no-dates items reports itself as smaller than it is
+    // and the data gap disappears from the count.
+    expect(model.siteGroups.reduce((sum, g) => sum + g.itemCount, 0)).toBe(model.itemCount);
+    expect(model.siteGroups.every((g) => g.rows.length <= g.itemCount)).toBe(true);
   });
 
   it('resolves the site-local lane as an initiative view', () => {
@@ -349,6 +370,189 @@ describe('project model', () => {
 
   it('returns undefined for an unknown key', () => {
     expect(buildProjectModel(S, 'DDTGC-99999')).toBeUndefined();
+  });
+});
+
+describe('region model', () => {
+  // Derived from the data rather than hardcoded, so the tests survive a fixture
+  // change that adds or moves a site.
+  const REGION = S.items[0]!.region;
+
+  it('returns undefined for an unknown region but not for a filtered-empty one', () => {
+    expect(buildRegionModel(S, 'Atlantis', ALL)).toBeUndefined();
+
+    // A region that exists but whose items are all filtered out must still resolve,
+    // so the page can say "nothing matches" rather than 404.
+    const narrowed = buildRegionModel(S, REGION, { risk: 'at-risk', scope: 'completed' })!;
+    expect(narrowed).toBeDefined();
+    expect(narrowed.itemCount).toBe(0);
+    expect(narrowed.groups).toHaveLength(0);
+  });
+
+  it('groups by site and reconciles every item into a lane or the no-dates group', () => {
+    const model = buildRegionModel(S, REGION, ALL)!;
+    const plotted = model.groups.flatMap((g) => g.rows);
+
+    expect(model.itemCount).toBe(S.items.filter((i) => i.region === REGION).length);
+    expect(plotted.length + model.noDates.length).toBe(model.itemCount);
+    expect(model.siteCount).toBe(model.groups.length);
+    expect(model.groups.reduce((sum, g) => sum + g.itemCount, 0)).toBe(model.itemCount);
+    expect(plotted.every((r) => r.bar || r.pointPct !== undefined)).toBe(true);
+  });
+
+  it('gives site-led work no separate treatment at this grain', () => {
+    // Region groups are per SITE. A local item sits in its site's group like any
+    // other -- unlike the site and roadmap views, which lane it separately.
+    const model = buildRegionModel(S, REGION, ALL)!;
+    expect(model.alignedCount + model.localCount).toBe(model.itemCount);
+    expect(model.groups.some((g) => g.siteCode === 'site-led')).toBe(false);
+
+    for (const group of model.groups) {
+      const siteItems = S.items.filter((i) => i.siteKey === group.siteKey && i.region === REGION);
+      expect(group.itemCount).toBe(siteItems.length);
+    }
+  });
+
+  it('orders sites by volume and never reports more at-risk than items', () => {
+    const model = buildRegionModel(S, REGION, ALL)!;
+    const counts = model.groups.map((g) => g.itemCount);
+    expect([...counts].sort((a, b) => b - a)).toEqual(counts);
+    expect(model.groups.every((g) => g.atRiskCount <= g.itemCount)).toBe(true);
+    expect(model.atRiskCount).toBe(
+      S.items.filter((i) => i.region === REGION && i.risk.atRisk).length,
+    );
+  });
+
+  it('reports the next go-live as a future, non-terminal date', () => {
+    const model = buildRegionModel(S, REGION, ALL)!;
+    if (model.nextGoLive !== undefined) {
+      expect(model.nextGoLive >= S.asOf).toBe(true);
+    }
+  });
+
+  it('lists every region, including any with no projects', () => {
+    const index = buildRegionIndex(S);
+    const regions = new Set([...S.sites.map((s) => s.region), ...S.items.map((i) => i.region)]);
+
+    expect(index).toHaveLength(regions.size);
+    for (const row of index) expect(regions.has(row.region as never)).toBe(true);
+
+    // Largest first, and the percentage must reconcile with the counts.
+    const counts = index.map((r) => r.itemCount);
+    expect([...counts].sort((a, b) => b - a)).toEqual(counts);
+    for (const row of index) {
+      expect(row.atRiskCount).toBeLessThanOrEqual(row.itemCount);
+      expect(row.atRiskPct).toBe(
+        row.itemCount === 0 ? 0 : Math.round((row.atRiskCount / row.itemCount) * 100),
+      );
+    }
+  });
+
+  it('counts only active work in the index, matching the site index', () => {
+    const index = buildRegionIndex(S);
+    const total = index.reduce((sum, row) => sum + row.itemCount, 0);
+    const active = S.items.filter(
+      (i) => i.risk.level !== 'complete' && i.risk.level !== 'cancelled',
+    );
+    expect(total).toBe(active.length);
+  });
+});
+
+describe('data model', () => {
+  const model = buildDataModel(S);
+
+  it('reports coverage straight from the snapshot, never recomputed', () => {
+    // THE SECOND ANTI-DRIFT GUARD. This page is what a reader consults to check the
+    // numbers elsewhere, so it must not be capable of disagreeing with the snapshot
+    // that verify-snapshot gates on.
+    expect(model.coverage).toBe(S.coverage);
+    expect(model.itemsTotal).toBe(S.coverage.itemsTotal);
+    expect(model.itemsActive).toBe(S.coverage.itemsActive);
+
+    const byLabel = new Map(model.coverageRows.map((r) => [r.label, r]));
+    expect(byLabel.get('Authored a status')!.known).toBe(S.coverage.withAnyRag);
+    expect(byLabel.get('Reported through SPOT')!.known).toBe(S.coverage.withSpotStatus);
+    expect(byLabel.get('Explain their status')!.known).toBe(S.coverage.withNarrative);
+    expect(byLabel.get('Both start and go-live')!.known).toBe(S.coverage.withBothDates);
+    expect(model.coverageRows.every((r) => r.total === S.coverage.itemsActive)).toBe(true);
+    expect(model.coverageRows.every((r) => r.known <= r.total)).toBe(true);
+  });
+
+  it('states two distinct freshness facts, because the feed is not live', () => {
+    // `syncedAt` is when we read the source; `newestUpdate` is how current the
+    // source data itself was. Reporting only the former would imply the data is
+    // fresher than it is.
+    const newest = S.items.map((i) => i.updatedAt).sort().at(-1);
+    expect(model.newestUpdate).toBe(newest);
+    expect(model.syncedAt).toBe(S.syncedAt);
+    expect(model.dataAgeDays).toBeGreaterThanOrEqual(0);
+  });
+
+  it('shows every distribution over the same denominator the snapshot used', () => {
+    const provenanceTotal = model.provenance.reduce((sum, r) => sum + r.count, 0);
+    const summaryTotal = model.summarySource.reduce((sum, r) => sum + r.count, 0);
+    const riskTotal = model.riskLevels.reduce((sum, r) => sum + r.count, 0);
+
+    expect(provenanceTotal).toBe(S.coverage.itemsActive);
+    expect(summaryTotal).toBe(S.coverage.itemsActive);
+    expect(riskTotal).toBe(S.coverage.itemsActive);
+
+    // Zero-count classes are dropped rather than rendered as empty rows.
+    expect(model.provenance.every((r) => r.count > 0)).toBe(true);
+  });
+
+  it('takes its status wording from RISK_LEVEL_LABELS rather than inventing any', () => {
+    for (const row of model.riskLevels) {
+      expect(row.label).toBe(RISK_LEVEL_LABELS[row.level]);
+      expect(row.key).toBe(row.level);
+    }
+  });
+
+  it('counts risk reasons across items, not items, since one item can carry several', () => {
+    const expected = S.items.flatMap((i) => i.risk.reasons).length;
+    expect(model.reasons.reduce((sum, r) => sum + r.count, 0)).toBe(expected);
+    for (const row of model.reasons) {
+      expect(row.label).toBe(REASON_LABELS[row.key as keyof typeof REASON_LABELS]);
+    }
+  });
+
+  it('gives per-site coverage for every configured site, including empty ones', () => {
+    expect(model.sites).toHaveLength(S.sites.length);
+
+    for (const row of model.sites) {
+      expect(row.authored).toBeLessThanOrEqual(row.itemCount);
+      expect(row.narrative).toBeLessThanOrEqual(row.itemCount);
+      expect(row.bothDates).toBeLessThanOrEqual(row.itemCount);
+      expect(row.drift).toBe(row.itemCount - row.site.expectedActiveCount);
+      // A site with no items must report 0%, never NaN.
+      if (row.itemCount === 0) expect(row.authoredPct).toBe(0);
+    }
+
+    // Per-site active counts must sum to the portfolio active count.
+    expect(model.sites.reduce((sum, r) => sum + r.itemCount, 0)).toBe(S.coverage.itemsActive);
+  });
+
+  it('surfaces an empty site, which is the gate’s hard failure', () => {
+    // A site whose level-1 issue type is unrecognised returns nothing and reports no
+    // error -- it renders as a site with no work. The fixture includes that case.
+    expect(model.emptySites.length).toBeGreaterThan(0);
+    expect(model.emptySites.every((s) => s.activeCount === 0)).toBe(true);
+  });
+
+  it('names programmes with no dates instead of leaving them invisible', () => {
+    expect(model.initiativesWithoutDates.map((i) => i.key).sort()).toEqual(
+      S.initiatives.filter((i) => !i.hasDates).map((i) => i.key).sort(),
+    );
+  });
+
+  it('passes warnings through verbatim', () => {
+    // Warnings are expected findings, not defects, and must not be reworded or
+    // filtered on the way to the page.
+    expect(model.warnings).toEqual(S.warnings);
+  });
+
+  it('excludes the synthetic site-local lane from the programme count', () => {
+    expect(model.initiativeCount).toBe(S.initiatives.filter((i) => i.portfolioKey !== '').length);
   });
 });
 

@@ -27,8 +27,10 @@ import {
   type TransformContext,
 } from '@/lib/transform.js';
 import { buildCoverage, buildSiteRollup, buildSiteSummaries } from '@/lib/rollup.js';
-import { snapshotSchema, type RoadmapItem, type Snapshot } from '@/types/domain.js';
+import { normaliseStatus } from '@/lib/normalise.js';
+import { canonicalPhaseSchema, snapshotSchema, type RoadmapItem, type Snapshot } from '@/types/domain.js';
 import { PORTFOLIOS } from '@config/projects.js';
+import { CANONICAL_PHASES, PHASE_LABELS, PHASE_TO_CATEGORY } from '@config/status-map.js';
 
 const ASOF = '2026-08-05';
 
@@ -455,5 +457,76 @@ describe('full snapshot assembly', () => {
     expect(local.map((i) => i.key).sort()).toEqual(['DDTBRY-412', 'NEUCHDDT-133', 'NEUCHDDT-96']);
     expect(unaligned.itemKeys).toHaveLength(3);
     expect(unaligned.narrative.executiveSummary).toContain('site-led projects');
+  });
+});
+
+/**
+ * WP13. Status names are the seam between Jira's per-project workflows and the
+ * canonical phase vocabulary, and a name that fails to map does not error -- it
+ * falls through to `statusCategory`, which is a coarser and sometimes wrong answer.
+ * So each mapping is asserted by name rather than trusted.
+ */
+describe('status name mapping', () => {
+  function jiraStatus(name: string, categoryKey: 'new' | 'indeterminate' | 'done') {
+    return { name, statusCategory: { key: categoryKey } };
+  }
+
+  it('maps each newly approved status name to its phase', () => {
+    const cases: readonly [string, 'new' | 'indeterminate' | 'done', string][] = [
+      ['Open', 'new', 'demand'],
+      ['Assessment', 'new', 'initiate'],
+      ['Define', 'new', 'plan'],
+      ['In Review', 'indeterminate', 'execute'],
+      ['Discarded', 'done', 'cancelled'],
+      ['Hold', 'indeterminate', 'hold'],
+      ['ON HOLD', 'indeterminate', 'hold'],
+    ];
+
+    for (const [name, categoryKey, phase] of cases) {
+      const result = normaliseStatus(jiraStatus(name, categoryKey));
+      expect(result.phase, `${name} -> ${phase}`).toBe(phase);
+      // Matched by NAME, so the category fallback must not have been used.
+      expect(result.usedCategoryFallback, `${name} matched by name`).toBe(false);
+      // The verbatim Jira name is always retained for the drill-down.
+      expect(result.raw).toBe(name);
+    }
+  });
+
+  it('recognises ON HOLD however the site cases it', () => {
+    for (const name of ['ON HOLD', 'on hold', 'On Hold', '  On Hold  ']) {
+      expect(normaliseStatus(jiraStatus(name, 'indeterminate')).phase).toBe('hold');
+    }
+  });
+
+  it('maps Discarded to cancelled, not complete, despite its done category', () => {
+    // Jira files abandonment under `statusCategory: done`. Relying on the category
+    // would report discarded work as DELIVERED and inflate the completed count --
+    // the same trap as "Will not do".
+    const result = normaliseStatus(jiraStatus('Discarded', 'done'));
+    expect(result.phase).toBe('cancelled');
+    expect(result.category).toBe('done');
+  });
+
+  it('still maps a suffixed status name, as DDTJG writes them', () => {
+    expect(normaliseStatus(jiraStatus('ON HOLD - Epic', 'indeterminate')).phase).toBe('hold');
+    expect(normaliseStatus(jiraStatus('In Review - Epic', 'indeterminate')).phase).toBe('execute');
+  });
+
+  it('falls back to the category and flags it for an unmapped name', () => {
+    const result = normaliseStatus(jiraStatus('Awaiting Vendor', 'indeterminate'));
+    expect(result.phase).toBe('execute');
+    expect(result.usedCategoryFallback).toBe(true);
+  });
+
+  it('gives every canonical phase a label and a category', () => {
+    for (const phase of CANONICAL_PHASES) {
+      expect(PHASE_LABELS[phase]).toBeTruthy();
+      expect(PHASE_TO_CATEGORY[phase]).toBeTruthy();
+    }
+    // Widening the phase enum must not invalidate a snapshot already written.
+    expect(canonicalPhaseSchema.safeParse('hold').success).toBe(true);
+    expect(PHASE_LABELS.hold).toBe('On Hold');
+    // Held work is neither delivered nor abandoned.
+    expect(PHASE_TO_CATEGORY.hold).toBe('in-progress');
   });
 });

@@ -15,7 +15,7 @@ import { buildSiteModel } from '@/lib/view-models/site.js';
 import { fiscalYearOptions, parseFilters, type RawSearchParams } from '@/lib/view-models/filters.js';
 import { HEALTH_DISTRIBUTION_ORDER } from '@/lib/view-models/health.js';
 import { HealthLegend } from '@/components/HealthMark.js';
-import { Card, EmptyState, Notice, ProvenanceChip, StatTile } from '@/components/Primitives.js';
+import { Card, EmptyState, Notice, StatTile, TableView } from '@/components/Primitives.js';
 import { FilterBar, Shell, SiteHeader } from '@/components/Shell.js';
 import { MilestoneMarker, SpanBar, TimelineFrame, TimelineGroupHeader, TimelineRow } from '@/components/Timeline.js';
 
@@ -143,6 +143,45 @@ export default async function SitePage({
             ))}
           </TimelineFrame>
         )}
+
+        {/* The table twin, on the same accessibility grounds as every other chart.
+            Includes the no-dates items, which the timeline cannot show at all. */}
+        {model.groups.length > 0 ? (
+          <TableView
+            summary={`Table view — ${model.itemCount} projects at ${model.site.name}`}
+            headers={['Programme', 'Project', 'Status', 'Reported', 'Jira status', 'Start', 'Go-live']}
+            rows={[
+              ...model.groups.flatMap((group) =>
+                group.rows.map((row) => ({
+                  key: `${group.key}:${row.key}`,
+                  cells: [
+                    group.isLocal ? 'Site-led' : group.label,
+                    { text: row.title, href: row.href },
+                    { level: row.level },
+                    { provenance: row.provenance },
+                    row.statusRaw,
+                    row.start ?? '—',
+                    row.end ?? '—',
+                  ],
+                })),
+              ),
+              // The items the chart cannot show at all. They keep their programme,
+              // so the table is the only place their full context appears.
+              ...model.noDates.map((row) => ({
+                key: `nodates:${row.key}`,
+                cells: [
+                  row.groupLabel,
+                  { text: row.title, href: row.href },
+                  { level: row.level },
+                  { provenance: row.provenance },
+                  row.statusRaw,
+                  row.start ?? '—',
+                  row.end ?? '—',
+                ],
+              })),
+            ]}
+          />
+        ) : undefined}
 
         <Card title="Alignment" subtitle="How this site's work rolls up">
           <div className="legend">

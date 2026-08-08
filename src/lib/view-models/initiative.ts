@@ -24,8 +24,21 @@ export interface SiteRollupRow extends SiteRollup {
 export interface InitiativeModel {
   initiative: Initiative;
   scale: TimelineScale;
-  /** Grouped by site, matching the reference report's Initiative-Project matrix. */
-  siteGroups: { siteKey: string; siteName: string; siteCode: string; level: RiskLevel; rows: ItemRow[] }[];
+  /**
+   * Grouped by site, matching the reference report's Initiative-Project matrix.
+   *
+   * `itemCount` counts EVERY item at the site, `rows` only the plottable ones. The
+   * header must show the former: a group labelled "(2 items)" when the site has
+   * four, two of which have no dates, hides the data gap it should be exposing.
+   */
+  siteGroups: {
+    siteKey: string;
+    siteName: string;
+    siteCode: string;
+    level: RiskLevel;
+    itemCount: number;
+    rows: ItemRow[];
+  }[];
   siteRollup: SiteRollupRow[];
   noDates: ItemRow[];
   itemCount: number;
@@ -75,10 +88,11 @@ export function buildInitiativeModel(
         siteName: first.siteName,
         siteCode: first.siteCode,
         level: worstRisk(siteItems.map((i) => i.risk.level)),
+        itemCount: siteItems.length,
         rows: rows.filter(plottable),
       };
     })
-    .sort((a, b) => b.rows.length - a.rows.length);
+    .sort((a, b) => b.itemCount - a.itemCount || a.siteCode.localeCompare(b.siteCode));
 
   return {
     initiative,

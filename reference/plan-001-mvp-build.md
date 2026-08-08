@@ -300,6 +300,15 @@ Approved and config-only, but it changes what the UI renders, so it lands before
 - `src/lib/risk.ts`: `phase === 'hold'` yields at least `monitor` with an `on-hold` reason —
   otherwise a recently-updated held item with a future go-live renders **on-track**, which is the
   precise false reassurance this application exists to prevent.
+
+  > **Approved, 2026-08-08 — the floor applies to authored statuses too.** The plan's original
+  > wording addressed only the derived path, leaving the authored case open. Decision: a `hold`
+  > status floors health at `monitor` **even against an authored Green**, making it the second
+  > exception to "an authored status wins outright" alongside the terminal-status rule. Rationale:
+  > workflow state is the stronger and more current signal, a project explicitly moved to Hold must
+  > never present as Green, an authored Red is never softened (it is a floor, not a cap), and
+  > provenance is left untouched so the evidence trail survives. Keyed on the canonical phase rather
+  > than status names, so any future name mapped to `hold` inherits it.
 - Confirm the held-item count from the REST snapshot when a token is available. Not a blocker: the
   mapping is right regardless of volume.
 

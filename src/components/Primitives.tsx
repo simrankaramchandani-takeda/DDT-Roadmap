@@ -6,7 +6,8 @@
 import type { ReactElement, ReactNode } from 'react';
 
 import { PROVENANCE_DISPLAY } from '@/lib/view-models/health.js';
-import type { RiskProvenance } from '@/types/domain.js';
+import type { RiskLevel, RiskProvenance } from '@/types/domain.js';
+import { HealthMark } from './HealthMark.js';
 
 /**
  * Provenance sits beside every status. An inferred signal must never be mistakable
@@ -97,5 +98,83 @@ export function Notice({ title, children }: { title: string; children: ReactNode
       <div className="notice-title">{title}</div>
       <div className="secondary">{children}</div>
     </div>
+  );
+}
+
+/**
+ * A cell. The health and provenance variants exist so the table renders the SAME
+ * marks as the chart -- a table twin that dropped to a bare word would be a second,
+ * divergent vocabulary for the same state.
+ */
+export type TableCell =
+  | string
+  | number
+  | { text: string; href?: string }
+  | { level: RiskLevel }
+  | { provenance: RiskProvenance };
+
+export interface TableRow {
+  key: string;
+  cells: TableCell[];
+}
+
+function renderCell(cell: TableCell): ReactNode {
+  if (typeof cell === 'string' || typeof cell === 'number') return cell;
+  if ('level' in cell) return <HealthMark level={cell.level} />;
+  if ('provenance' in cell) return <ProvenanceChip provenance={cell.provenance} />;
+  return cell.href ? <a href={cell.href}>{cell.text}</a> : cell.text;
+}
+
+/**
+ * The table twin every chart carries.
+ *
+ * A Gantt is not readable by a screen reader however carefully it is marked up, and
+ * a percentage-positioned bar carries no value a reader can extract. So this is an
+ * accessibility requirement rather than a convenience, and it is why `TimelineFrame`
+ * is never the only representation of a dataset on a page.
+ *
+ * Collapsed by default in a `<details>`: it needs no client JavaScript, which keeps
+ * these Server Components and means it works with JS disabled.
+ */
+export function TableView({
+  summary,
+  headers,
+  rows,
+}: {
+  summary: string;
+  headers: readonly string[];
+  rows: readonly TableRow[];
+}): ReactElement {
+  return (
+    <details className="tableview">
+      <summary>{summary}</summary>
+      {rows.length === 0 ? (
+        <EmptyState message="Nothing to tabulate in this view." />
+      ) : (
+        <div className="tablewrap">
+          <table>
+            <caption className="sr-only">{summary}</caption>
+            <thead>
+              <tr>
+                {headers.map((header) => (
+                  <th key={header} scope="col">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  {row.cells.map((cell, index) => (
+                    <td key={`${row.key}:${index}`}>{renderCell(cell)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </details>
   );
 }

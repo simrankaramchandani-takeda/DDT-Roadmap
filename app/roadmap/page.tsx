@@ -13,7 +13,7 @@ import { buildGlobalRoadmapModel } from '@/lib/view-models/roadmap.js';
 import { fiscalYearOptions, parseFilters, type RawSearchParams } from '@/lib/view-models/filters.js';
 import { HEALTH_DISTRIBUTION_ORDER } from '@/lib/view-models/health.js';
 import { HealthLegend } from '@/components/HealthMark.js';
-import { Card, EmptyState } from '@/components/Primitives.js';
+import { Card, EmptyState, TableView } from '@/components/Primitives.js';
 import { FilterBar, Shell, SiteHeader } from '@/components/Shell.js';
 import { MilestoneMarker, SpanBar, TimelineFrame, TimelineGroupHeader, TimelineRow } from '@/components/Timeline.js';
 
@@ -146,6 +146,50 @@ export default async function GlobalRoadmapPage({
             )}
           </TimelineFrame>
         )}
+
+        {/* The table twin. A Gantt conveys nothing to a screen reader however it is
+            marked up, and a percentage-positioned bar carries no extractable value,
+            so this is an accessibility requirement rather than a convenience. */}
+        {model.lanes.length > 0 ? (
+          <TableView
+            summary={`Table view — ${model.lanes.length} lanes, ${model.itemCount} projects`}
+            headers={['Programme', 'Projects', 'Sites', 'Status', 'Span', 'Span source']}
+            rows={[
+              ...model.lanes.flatMap((lane) => [
+                {
+                  key: lane.key,
+                  cells: [
+                    lane.href ? { text: lane.summary, href: lane.href } : lane.isLocal ? 'Site-led' : lane.summary,
+                    lane.itemCount,
+                    lane.siteCount,
+                    { level: lane.level },
+                    `${lane.bar ? `${lane.bar.clippedStart ? '<' : ''}${Math.round(lane.bar.xPct)}%–${lane.bar.clippedEnd ? '>' : ''}${Math.round(lane.bar.xPct + lane.bar.wPct)}%` : '—'}`,
+                    lane.datesDerived ? 'Rolled up from projects' : 'Authored',
+                  ],
+                },
+                // Sub-lanes indent under their parent so the table keeps the chart's
+                // structure rather than flattening it.
+                ...(lane.subLanes ?? []).map((sub) => ({
+                  key: sub.key,
+                  cells: [
+                    { text: `— ${sub.summary}`, ...(sub.href ? { href: sub.href } : {}) },
+                    sub.itemCount,
+                    sub.siteCount,
+                    { level: sub.level },
+                    '—',
+                    'Rolled up from projects',
+                  ],
+                })),
+              ]),
+              // Named, not omitted: an initiative absent from the table would read
+              // as "no such programme" rather than "no dates recorded".
+              ...model.noDates.map((entry) => ({
+                key: entry.key,
+                cells: [entry.summary, entry.itemCount, '—', 'No dates reported', '—', '—'],
+              })),
+            ]}
+          />
+        ) : undefined}
 
         <Card title="Reading this chart">
           <div className="muted">

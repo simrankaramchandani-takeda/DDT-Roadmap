@@ -418,6 +418,11 @@ const ITEMS: RoadmapItem[] = [
     updatedAt: '2026-08-05T09:00:00.000Z',
     daysSinceUpdate: 2,
   }),
+  // --- UNMAPPED STATUS NAME. Falls back to statusCategory `indeterminate` ->
+  //     `execute` and raises a warning, which the Data & coverage page surfaces.
+  //     The name is deliberately one that config does NOT map: an unrecognised
+  //     status is ingested rather than dropped, so a new workflow option cannot
+  //     make a site's work silently vanish.
   item({
     key: 'DDTGC-133',
     siteKey: 'DDTGC',
@@ -427,12 +432,59 @@ const ITEMS: RoadmapItem[] = [
     end: '2026-12-08',
     fiscalYears: ['FY26'],
     phase: 'execute',
-    statusRaw: 'In Review',
+    statusRaw: 'Awaiting Vendor',
     category: 'in-progress',
     risk: unreported,
     narrative: { executiveSummary: 'No status reported; go-live 8 Dec 2026.', summarySource: 'jira-description', summaryBasis: undefined },
     updatedAt: '2026-06-30T09:00:00.000Z',
     daysSinceUpdate: 38,
+  }),
+
+  // --- ON HOLD WITH AN AUTHORED GREEN. The case the `hold` phase exists for.
+  //     Recently updated, go-live still in the future, and the site's own RAG
+  //     reads Green -- so every other signal says ON TRACK. The hold floor in
+  //     risk.ts overrides it to Monitor, because a suspended project is not
+  //     progressing whatever its dates and its RAG say. This is the one derived
+  //     signal permitted to move an authored level, on the same reasoning as the
+  //     terminal-status rule: a workflow transition is a harder fact than a RAG
+  //     field the site has not revisited.
+  item({
+    key: 'DDTGC-141',
+    siteKey: 'DDTGC',
+    title: 'Serialisation line retrofit',
+    initiativeKey: 'DDTGMPORT-12',
+    start: '2026-04-01',
+    end: '2027-01-15',
+    fiscalYears: ['FY26'],
+    phase: 'hold',
+    statusRaw: 'ON HOLD',
+    category: 'in-progress',
+    risk: {
+      level: 'monitor',
+      provenance: 'spot',
+      atRisk: true,
+      reasons: [
+        {
+          code: 'on-hold',
+          label: 'On Hold',
+          detail: 'Work is on hold; Jira status is ON HOLD. Progress is suspended.',
+        },
+      ],
+      authored: {
+        value: 'Green',
+        fieldId: 'customfield_24262',
+        sourceLabel: 'Overall Status (SPOT, Grange Castle)',
+        asOf: '2026-08-03T09:00:00.000Z',
+      },
+      score: 40,
+    },
+    narrative: {
+      executiveSummary: 'On hold since June; the site last reported Green. Go-live 15 Jan 2027.',
+      summarySource: 'generated',
+      summaryBasis: ['phase=hold', 'statusRaw=ON HOLD', 'authoredRag=Green'],
+    },
+    updatedAt: '2026-08-03T09:00:00.000Z',
+    daysSinceUpdate: 4,
   }),
 
   // --- CROSS-SITE MARKER COLLISION. On the Global Roadmap a lane's markers come
@@ -485,7 +537,10 @@ const ITEMS: RoadmapItem[] = [
     initiativeKey: 'DDTGMPORT-27',
     end: '2026-10-30',
     fiscalYears: ['FY26'],
-    phase: 'plan',
+    // `Assessment` maps to `initiate`, which is in NOT_STARTED_PHASES -- which is
+    // what makes the `go-live-risk` reason below correct. Before that mapping
+    // existed this status fell through to `plan` and the reason could not fire.
+    phase: 'initiate',
     statusRaw: 'Assessment',
     category: 'todo',
     risk: {
@@ -862,7 +917,7 @@ export const FIXTURE_SNAPSHOT: Snapshot = {
   items: ITEMS,
   coverage: buildCoverage(ITEMS, ACTIVE_ITEMS, AS_OF, 0),
   warnings: [
-    'DDTGC-133 has an unmapped status "In Review"; fell back to statusCategory -> "execute". Add it to config/status-map.ts.',
+    'DDTGC-133 has an unmapped status "Awaiting Vendor"; fell back to statusCategory -> "execute". Add it to config/status-map.ts.',
     'DDTYAR-6 has no authored status and no dates; a derived signal was used.',
     'Fixture data — not a real sync. See src/fixtures/snapshot.fixture.ts.',
   ],

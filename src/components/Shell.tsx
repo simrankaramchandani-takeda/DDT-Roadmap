@@ -20,7 +20,9 @@ const NAV = [
   { href: '/', label: 'Overview' },
   { href: '/roadmap', label: 'Global Roadmap' },
   { href: '/initiatives', label: 'Initiatives' },
+  { href: '/regions', label: 'Regions' },
   { href: '/sites', label: 'Sites' },
+  { href: '/data', label: 'Data' },
 ];
 
 export function SiteHeader({

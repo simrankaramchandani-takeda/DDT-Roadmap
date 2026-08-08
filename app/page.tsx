@@ -140,8 +140,10 @@ export default async function OverviewPage({
                     </div>
                   </div>
                   <div className="row-side">
-                    <a href={`/sites/${row.key.split('-')[0]}`}>{row.siteName}</a>
-                    <div className="muted">{row.region}</div>
+                    <a href={`/sites/${row.siteKey}`}>{row.siteName}</a>
+                    <div className="muted">
+                      <a href={`/regions/${encodeURIComponent(row.region)}`}>{row.region}</a>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -158,7 +160,9 @@ export default async function OverviewPage({
                 {model.regions.map((region) => (
                   <div className="bar-row" key={region.region}>
                     <span>
-                      <a href={`/${query ? query + '&' : '?'}region=${encodeURIComponent(region.region)}`}>
+                      {/* Through to the region view, carrying the current filters --
+                          the point of URL state is that it survives navigation. */}
+                      <a href={`/regions/${encodeURIComponent(region.region)}${query}`}>
                         {region.region}
                       </a>
                     </span>

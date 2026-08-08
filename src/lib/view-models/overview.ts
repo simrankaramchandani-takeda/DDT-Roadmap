@@ -30,6 +30,8 @@ export interface HealthSlice {
 export interface AttentionRow {
   key: string;
   title: string;
+  /** Carried explicitly: the component must never infer it from the item key. */
+  siteKey: string;
   siteName: string;
   siteCode: string;
   region: string;
@@ -42,6 +44,7 @@ export interface AttentionRow {
 export interface GoLiveRow {
   key: string;
   title: string;
+  siteKey: string;
   siteCode: string;
   goLive: string;
   level: RiskLevel;
@@ -140,6 +143,7 @@ export function buildOverviewModel(
     attention: ranked.slice(0, attentionLimit).map((item) => ({
       key: item.key,
       title: item.summary.cleanTitle,
+      siteKey: item.siteKey,
       siteName: item.siteName,
       siteCode: item.siteCode,
       region: item.region,
@@ -152,6 +156,7 @@ export function buildOverviewModel(
     upcoming: upcomingItems.slice(0, upcomingLimit).map((item) => ({
       key: item.key,
       title: item.summary.cleanTitle,
+      siteKey: item.siteKey,
       siteCode: item.siteCode,
       goLive: item.goLive!,
       level: item.risk.level,

@@ -64,6 +64,7 @@ export const REASON_CODES = [
   'resource-constraint',
   'scope-risk',
   'reporting-gap',
+  'on-hold',
   'no-immediate-action',
 ] as const;
 
@@ -77,6 +78,7 @@ export const REASON_LABELS: Readonly<Record<ReasonCode, string>> = {
   'resource-constraint': 'Resource Constraint',
   'scope-risk': 'Scope Risk',
   'reporting-gap': 'Reporting Gap',
+  'on-hold': 'On Hold',
   'no-immediate-action': 'No Immediate Action Required',
 } as const;
 

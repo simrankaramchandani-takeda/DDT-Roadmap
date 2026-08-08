@@ -2,13 +2,20 @@
 
 Executive decision-support view of Digital Data & Technology initiatives across Takeda's global manufacturing sites.
 
-**Status: Phase 1 (data pipeline) complete. No UI yet.** The approved plan gates UI work behind the pipeline reproducing the discovery metrics. See [The gate](#the-gate).
+**Status: Phase 1 (data pipeline) complete. Phase 2 application in progress — the MVP screens
+render against a committed fixture.** All seven MVP screens exist (`/`, `/roadmap`, `/regions/[r]`,
+`/sites/[k]`, `/initiatives/[k]`, `/projects/[k]`, `/data`); the Initiative-Project matrix is
+deferred post-MVP by design.
 
-Phase 2 is designed but not built:
-[`reference/design-001-odata-adapter.md`](reference/design-001-odata-adapter.md) (ingestion from
-the OData feed) and [`reference/design-002-application.md`](reference/design-002-application.md)
-(the executive UI — architecture, screens, data contracts). The two tracks are decoupled by the
-snapshot contract, so UI work needs no feed access.
+The two Phase 2 tracks are decoupled by the snapshot contract, so application work needs no feed
+access — see [`reference/design-002-application.md`](reference/design-002-application.md) (the
+executive UI) and [`reference/plan-001-mvp-build.md`](reference/plan-001-mvp-build.md) (the build
+plan). **Ingestion is designed but not started** and awaits explicit go-ahead:
+[`reference/design-001-odata-adapter.md`](reference/design-001-odata-adapter.md).
+
+`npm run dev` serves the application. When no `data/snapshot.json` is present the loader falls back
+to the committed fixture and every screen carries a persistent "Sample data" chip, so fixture data
+can never be mistaken for a real sync.
 
 ---
 
@@ -22,10 +29,12 @@ It replaces a four-page Power BI report (screenshots in the repo root) that show
 
 ```bash
 npm install
+npm run dev                    # serves the app; falls back to the committed fixture
+npm test                       # 254 tests, no credentials needed
+
 cp .env.example .env.local     # then add your API token
 npm run sync                   # Jira -> data/snapshot.json
 npm run verify-snapshot        # the Phase 1 gate
-npm test                       # 147 tests, no credentials needed
 ```
 
 ### Credentials
@@ -47,10 +56,17 @@ Set `SNAPSHOT_AS_OF=YYYY-MM-DD` to pin the date risk is evaluated against, for r
 ## Architecture
 
 ```
-Jira REST v3  ──>  scripts/sync.ts  ──>  data/snapshot.json  ──>  (future UI)
-                         │
-                         └─ src/lib/*  pure, tested transformation
+Jira REST v3 ─> scripts/sync.ts ─> data/snapshot.json ─> src/lib/snapshot.ts ─> view models ─> app/
+                      │                    │                (the only         (pure,        (Server
+                      │                    │                 data seam)        tested)       Components)
+                      └─ src/lib/*  pure, tested transformation
 ```
+
+The layering is strictly one-directional and each rule prevents a known failure: **no component
+computes an aggregate** (every number is unit-testable without rendering), **no component contains
+leadership-facing prose** (`config/narrative.ts` owns all wording), and **`HealthMark` is the only
+component permitted to render a health colour** — red and green sit at ΔE 4.1 under deuteranopia
+against a floor of 8, so health is always colour *plus* glyph *plus* label.
 
 > **Source under review.** The enterprise OData feed that already powers the DDTRoadmap
 > Power BI report exposes the same underlying Jira dataset, and is the likely strategic
@@ -72,12 +88,17 @@ Snapshots are written atomically (temp file + rename), so a failed sync never tr
 | `config/` | Every decision that could change: projects, regions, field IDs, fiscal year, status map, taxonomy, wording |
 | `src/types/domain.ts` | Domain model + Zod schemas (the sync/read contract) |
 | `src/lib/` | Pure transformation logic — no I/O |
+| `src/lib/snapshot.ts` | The only data-access point. Validates on read; reports `live` vs `fixture` |
+| `src/lib/view-models/` | Pure snapshot → page props. All counting, grouping and geometry. Fully unit-tested |
+| `src/components/` | Presentational only. No aggregation, no wording of their own |
+| `src/fixtures/` | The committed fixture snapshot, covering the cases that break layouts |
+| `app/` | Next.js App Router pages (Server Components) |
 | `scripts/sync.ts` | Fetch, transform, validate, write |
 | `scripts/verify-snapshot.ts` | The gate: baseline comparison + canaries |
-| `tests/` | 147 tests, including fixtures transcribed from real Jira payloads |
+| `tests/` | 254 tests, including fixtures transcribed from real Jira payloads |
 | `data/` | Generated snapshot (gitignored) |
 
-## Three things that are easy to get wrong
+## Four things that are easy to get wrong
 
 Read this before changing the pipeline.
 
@@ -99,13 +120,24 @@ Discovery found items with Jira status `Done` whose `Health` field still read "G
 
 Similarly, `Will not do` carries `statusCategory: done` in Jira, so cancellation is checked *before* completion — otherwise abandoned work reports as delivered.
 
+### 4. A `Hold` status floors health at Monitor, even against an authored Green
+
+**Approved business rule.** A project in a Hold status (`Hold`, `ON HOLD`) reports a **minimum health of Monitor**, whatever else the record says. It is the second of the two exceptions to "an authored status wins outright", and it exists for the same reason as rule 3:
+
+- **Workflow state is the stronger, more current signal.** A RAG field may not have been revisited since the work was suspended.
+- **A project explicitly moved to Hold must never present as Green.** Without the floor, a held project updated yesterday with a go-live months away derives as *On Track* — the exact false reassurance this application exists to prevent.
+- **It is a floor, never a cap.** An authored Red stays Red; softening it would be the opposite failure, the app overruling a site that is escalating.
+- **Provenance is untouched.** The level changes; the evidence trail does not, so the reader still sees that a site authored the status and what value they authored.
+
+Terminality is resolved *before* the floor, so completed or cancelled work is never dragged back into the at-risk population. The rule keys on the canonical `hold` **phase**, not on status names, so any new name mapped to `hold` in `config/status-map.ts` inherits it automatically. Implemented in `src/lib/risk.ts`; the three named cases (Hold+Green, Hold+derived Green, Hold+Red) are covered in `tests/risk.test.ts`.
+
 ## Data model notes
 
 **Fiscal year** — April start, labelled by start year, Q1 = Apr–Jun. `FY26` = 1 Apr 2026 → 31 Mar 2027. This is *verified*, not assumed: the reference report's axis begins `4/1/2023` under a column labelled `2023 / Q1`. Configurable in `config/fiscal-year.ts`; nothing else hardcodes it.
 
 **Go-live** is the item due date, per the report's own note: *"Milestones are tied to local go-live dates."* There is no dedicated go-live field anywhere in the schema.
 
-**Risk** resolves in order: SPOT `Overall Status` → other authored RAG → derived from schedule, status, dependencies and staleness. Provenance is recorded on every item and always shown, so nobody mistakes an inferred status for a reported one. Thresholds are in `config/narrative.ts`.
+**Risk** resolves in order: SPOT `Overall Status` → other authored RAG → derived from schedule, status, dependencies and staleness. Two workflow-state exceptions override an authored RAG: a terminal status wins outright, and a `Hold` status floors health at Monitor — see rules 3 and 4 above. Provenance is recorded on every item and always shown, so nobody mistakes an inferred status for a reported one. Thresholds are in `config/narrative.ts`.
 
 **The SPOT field ID varies by site.** `Overall Status`, `Overall Status Description` and `SPOT ID` are one business attribute each, but each site's SPOT integration was provisioned with its own custom field — 18 different `Overall Status` fields across 18 sites. `SITE_SPOT_FIELDS` in `config/fields.ts` maps them, and the candidate lists coalesce to a single normalised value carrying the source `fieldId` for audit. Exactly one candidate is ever populated per item. `DDTLNZ` and `DDTSNG` break the otherwise-adjacent ID numbering, so the table is transcribed from evidence, never derived — and `verify-snapshot` fails if a site's RAG starts resolving through an unexpected field.
 

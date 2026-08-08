@@ -16,7 +16,7 @@ import { buildInitiativeModel } from '@/lib/view-models/initiative.js';
 import { fiscalYearOptions, parseFilters, type RawSearchParams } from '@/lib/view-models/filters.js';
 import { HEALTH_DISTRIBUTION_ORDER } from '@/lib/view-models/health.js';
 import { HealthLegend, HealthMark } from '@/components/HealthMark.js';
-import { Card, EmptyState, Notice, ProvenanceChip, StatTile } from '@/components/Primitives.js';
+import { Card, EmptyState, Notice, ProvenanceChip, StatTile, TableView } from '@/components/Primitives.js';
 import { FilterBar, Shell, SiteHeader } from '@/components/Shell.js';
 import { MilestoneMarker, SpanBar, TimelineFrame, TimelineGroupHeader, TimelineRow } from '@/components/Timeline.js';
 
@@ -139,7 +139,7 @@ export default async function InitiativePage({
               <div key={group.siteKey}>
                 <TimelineGroupHeader
                   label={`${group.siteName} (${group.siteCode})`}
-                  itemCount={group.rows.length}
+                  itemCount={group.itemCount}
                   level={group.level}
                   href={`/sites/${group.siteKey}`}
                   scale={model.scale}
@@ -162,6 +162,42 @@ export default async function InitiativePage({
             ))}
           </TimelineFrame>
         )}
+
+        {/* The table twin, on the same accessibility grounds as every other chart. */}
+        {model.siteGroups.length > 0 ? (
+          <TableView
+            summary={`Table view — ${model.itemCount} projects across ${model.siteCount} sites`}
+            headers={['Site', 'Project', 'Status', 'Reported', 'Jira status', 'Start', 'Go-live']}
+            rows={[
+              ...model.siteGroups.flatMap((group) =>
+                group.rows.map((row) => ({
+                  key: `${group.siteKey}:${row.key}`,
+                  cells: [
+                    `${group.siteName} (${group.siteCode})`,
+                    { text: row.title, href: row.href },
+                    { level: row.level },
+                    { provenance: row.provenance },
+                    row.statusRaw,
+                    row.start ?? '—',
+                    row.end ?? '—',
+                  ],
+                })),
+              ),
+              ...model.noDates.map((row) => ({
+                key: `nodates:${row.key}`,
+                cells: [
+                  `${row.siteName} (${row.siteCode})`,
+                  { text: row.title, href: row.href },
+                  { level: row.level },
+                  { provenance: row.provenance },
+                  row.statusRaw,
+                  '—',
+                  '—',
+                ],
+              })),
+            ]}
+          />
+        ) : undefined}
       </div>
     </Shell>
   );

@@ -346,3 +346,129 @@ describe('rollUpRisk', () => {
     expect(rollUpRisk(['attention']).reasons[0]?.detail).toBe('1 of 1 linked project needs attention.');
   });
 });
+
+/**
+ * WP13 — THE HOLD FLOOR. An approved business rule with its own block, because it
+ * is the one derived signal permitted to move an authored level.
+ *
+ * The rule: a project in a Hold status reports a MINIMUM health of Monitor,
+ * whatever else the record says. Workflow state is a stronger and more current
+ * signal than a RAG field that may not have been revisited since the work was
+ * suspended, and a project explicitly moved to Hold must never present as Green.
+ * It is a floor and never a cap, so an authored Red stays Red.
+ *
+ * Without it, a held project updated yesterday with a go-live months away derives
+ * as ON TRACK — the precise false reassurance this application exists to prevent.
+ */
+describe('the hold floor', () => {
+  const onHold = status('ON HOLD', 'hold', 'in-progress');
+
+  /** Every non-hold signal says on track: recent update, both dates, no blockers. */
+  const healthy = { start: '2026-01-01', end: '2027-03-31' } as const;
+
+  const spotRed: { level: 'attention'; authored: AuthoredRag; isSpot: true } = {
+    level: 'attention',
+    isSpot: true,
+    authored: { value: 'Red', fieldId: 'customfield_24266', sourceLabel: 'Overall Status (SPOT)' },
+  };
+
+  const healthGreen: { level: 'on-track'; authored: AuthoredRag; isSpot: false } = {
+    level: 'on-track',
+    isSpot: false,
+    authored: { value: 'Green', fieldId: 'customfield_15784', sourceLabel: 'Health' },
+  };
+
+  // --- The three cases the approved rule names -------------------------------
+
+  it('CASE 1 — hold + authored Green resolves to Monitor', () => {
+    // The control: the identical record in Execute reads on-track, so the ONLY
+    // thing moving this level is the hold status.
+    expect(assessRisk(input({ authoredRag: spotGreen, ...healthy })).level).toBe('on-track');
+
+    const held = assessRisk(input({ status: onHold, authoredRag: spotGreen, ...healthy }));
+    expect(held.level).toBe('monitor');
+    expect(held.atRisk).toBe(true);
+    // Provenance is untouched: the floor changes the level, never the evidence
+    // trail, so the reader still sees the site authored this status.
+    expect(held.provenance).toBe('spot');
+    expect(held.authored?.value).toBe('Green');
+    expect(held.reasons.some((r) => r.code === 'on-hold')).toBe(true);
+  });
+
+  it('CASE 1b — the floor applies to a non-SPOT authored Green too', () => {
+    // The rule is about workflow state beating a stale RAG, so it cannot depend on
+    // WHICH field the RAG came from.
+    const held = assessRisk(input({ status: onHold, authoredRag: healthGreen, ...healthy }));
+    expect(held.level).toBe('monitor');
+    expect(held.provenance).toBe('reported');
+    expect(held.authored?.sourceLabel).toBe('Health');
+  });
+
+  it('CASE 2 — hold + derived Green resolves to Monitor', () => {
+    // No authored RAG at all: derivation would return on-track on these dates.
+    expect(assessRisk(input({ ...healthy })).level).toBe('on-track');
+
+    const held = assessRisk(input({ status: onHold, ...healthy }));
+    expect(held.level).toBe('monitor');
+    expect(held.atRisk).toBe(true);
+    expect(held.provenance).toBe('inferred');
+    expect(held.reasons.some((r) => r.code === 'on-hold')).toBe(true);
+  });
+
+  it('CASE 3 — hold + authored Red stays Red', () => {
+    // A floor, never a cap. Softening an authored Red to Monitor would be the
+    // opposite failure: the app overruling a site that is escalating.
+    const held = assessRisk(input({ status: onHold, authoredRag: spotRed, ...healthy }));
+    expect(held.level).toBe('attention');
+    expect(held.atRisk).toBe(true);
+    expect(held.provenance).toBe('spot');
+    expect(held.authored?.value).toBe('Red');
+  });
+
+  // --- Supporting behaviour -------------------------------------------------
+
+  it('leads with the on-hold reason, since that is the defining fact', () => {
+    const held = assessRisk(input({ status: onHold, ...healthy }));
+    expect(held.reasons[0]?.code).toBe('on-hold');
+    expect(held.reasons[0]?.label).toBe('On Hold');
+    // States the Jira status verbatim rather than asserting a cause for the hold.
+    expect(held.reasons[0]?.detail).toContain('ON HOLD');
+  });
+
+  it('is a floor for derived signals too — held AND overdue still escalates', () => {
+    const held = assessRisk(input({ status: onHold, start: '2024-01-01', end: '2026-01-01' }));
+    expect(held.level).toBe('attention');
+    expect(held.reasons.some((r) => r.code === 'on-hold')).toBe(true);
+    expect(held.reasons.some((r) => r.code === 'delayed-milestone')).toBe(true);
+  });
+
+  it('does not resurrect terminal work, which is resolved before the floor', () => {
+    // Terminality short-circuits first, so a completed or cancelled item can never
+    // be dragged back into the at-risk population.
+    for (const phase of ['complete', 'cancelled'] as const) {
+      const result = assessRisk(input({ status: status('Done', phase, 'done') }));
+      expect(result.atRisk).toBe(false);
+      expect(result.reasons).toHaveLength(0);
+    }
+  });
+
+  it('keeps a held project out of the unreported bucket when it has no dates', () => {
+    // The missing-dates branch downgrades to `unreported` only when nothing else
+    // fired. Being on hold is a reported fact, so it must survive that branch.
+    const held = assessRisk(input({ status: onHold }));
+    expect(held.level).toBe('monitor');
+    expect(held.reasons.some((r) => r.code === 'on-hold')).toBe(true);
+    expect(held.reasons.some((r) => r.code === 'reporting-gap')).toBe(true);
+  });
+
+  it('applies to every status name that maps to the hold phase', () => {
+    // `Hold` and `ON HOLD` both map to the phase, so both must floor. Keying the
+    // rule on the PHASE rather than the name is what makes that automatic.
+    for (const raw of ['Hold', 'ON HOLD']) {
+      const held = assessRisk(
+        input({ status: status(raw, 'hold', 'in-progress'), authoredRag: spotGreen, ...healthy }),
+      );
+      expect(held.level, raw).toBe('monitor');
+    }
+  });
+});

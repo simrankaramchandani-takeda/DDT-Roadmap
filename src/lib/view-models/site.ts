@@ -44,11 +44,20 @@ export interface LaneGroup {
   href?: string;
 }
 
+/**
+ * An item with no plottable span. Carries the group it belongs to, because that is
+ * the one thing the chart cannot show for it -- a no-dates item has no row, so
+ * without this the table twin could only say "somewhere at this site".
+ */
+export interface NoDatesRow extends ItemRow {
+  groupLabel: string;
+}
+
 export interface SiteModel {
   site: SiteSummary;
   scale: TimelineScale;
   groups: LaneGroup[];
-  noDates: ItemRow[];
+  noDates: NoDatesRow[];
   alignedCount: number;
   localCount: number;
   /** True when the site has NO work linked to a global programme. */
@@ -111,15 +120,16 @@ export function buildSiteModel(
   const plottable = (row: ItemRow): boolean => Boolean(row.bar) || row.pointPct !== undefined;
 
   const groups: LaneGroup[] = [];
-  const noDates: ItemRow[] = [];
+  const noDates: NoDatesRow[] = [];
 
   for (const [initiativeKey, groupItems] of byInitiative) {
+    const label = initiativeSummaries.get(initiativeKey) ?? initiativeKey;
     const rows = groupItems.map((i) => toItemRow(i, scale));
-    for (const row of rows) if (!plottable(row)) noDates.push(row);
+    for (const row of rows) if (!plottable(row)) noDates.push({ ...row, groupLabel: label });
 
     groups.push({
       key: initiativeKey,
-      label: initiativeSummaries.get(initiativeKey) ?? initiativeKey,
+      label,
       itemCount: groupItems.length,
       level: worstRisk(groupItems.map((i) => i.risk.level)),
       rows: rows.filter(plottable),
@@ -132,7 +142,7 @@ export function buildSiteModel(
 
   if (localItems.length > 0) {
     const rows = localItems.map((i) => toItemRow(i, scale));
-    for (const row of rows) if (!plottable(row)) noDates.push(row);
+    for (const row of rows) if (!plottable(row)) noDates.push({ ...row, groupLabel: 'Site-led' });
 
     // Always last: site-led work reads as a section of the site's own portfolio,
     // not as a competitor to the global programmes above it.

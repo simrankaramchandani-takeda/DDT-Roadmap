@@ -463,6 +463,27 @@ pairing is the documented mitigation, and it is present unconditionally here. Th
 "worse than red" inverts the severity reading. `cancelled` and `unreported` share grey and are
 separated by glyph and hatch, so cancelled work can never read as delivered.
 
+### Held work can never render as Green
+
+**Approved business rule, 2026-08-08.** A project whose canonical phase is `hold` reports a
+**minimum health of `monitor`**, even when the site has authored Green. This is one of only two
+signals permitted to override an authored RAG — the other being a terminal status — and both rest on
+the same premise: a workflow transition is a harder and more current fact than a status field that
+may not have been revisited since the work was suspended.
+
+| Case | Resolves to |
+|---|---|
+| Hold + authored Green (SPOT or any other RAG field) | `monitor` |
+| Hold + no authored status, derived Green | `monitor` |
+| Hold + authored Red | `attention` — unchanged |
+
+It is a **floor, never a cap**: softening an authored Red would be the opposite failure, the app
+overruling a site that is escalating. Provenance is **never** altered, so a held project still shows
+that its status was site-authored and what value was authored — the level changes, the evidence trail
+does not. Terminality resolves before the floor, so completed and cancelled work is never pulled back
+into the at-risk population. The rule keys on the phase, not on status names, so a new name mapped to
+`hold` inherits it with no code change.
+
 ### Provenance is co-equal with status
 
 Every status display carries a `ProvenanceChip`, on an **ordinal blue ramp** (validated: monotone
@@ -591,7 +612,11 @@ current than the feed.
 3. **Screen 7 deferral** — the three-level matrix is the most faithful reference-parity view and
    the least decision-support value. If parity for its own sake matters more than sequencing, it
    moves into the MVP.
-4. **`hold` phase** (from design-001) — affects the phase vocabulary and therefore the timeline
-   grouping and legend. Still needs sign-off.
+4. ~~**`hold` phase** (from design-001) — affects the phase vocabulary and therefore the timeline
+   grouping and legend. Still needs sign-off.~~ **Signed off and implemented, 2026-08-08.** `hold`
+   is a canonical phase labelled *On Hold*; `Hold` and `ON HOLD` map to it. A held project reports a
+   **minimum health of Monitor even against an authored Green** — the second exception to
+   "an authored status wins outright", on the same reasoning as the terminal-status rule. An authored
+   Red is never softened and provenance is never altered. See §8 and `src/lib/risk.ts`.
 5. **Per-site local initiatives in the snapshot** — recommended eventually, must not ship during
    the migration.
