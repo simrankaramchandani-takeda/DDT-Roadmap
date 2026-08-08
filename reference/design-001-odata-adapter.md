@@ -1,6 +1,31 @@
 # Design-001: OData adapter for Feed #3
 
-- **Status:** Proposed, for review. **Nothing here is implemented.**
+> ## Implementation status after WP4 (2026-08-08)
+>
+> **Built — the transformation layer, no connection.** `src/lib/feed/` implements the
+> Feed DTOs, three-state validation outcomes, centralised normalisation and the adapter
+> that emits `JiraIssue[]` and then the canonical model. `src/lib/spot-wiki.ts` and the
+> `parseSpotDescription` dispatcher (§4) are done, sharing one vocabulary with the ADF
+> parser via `src/lib/spot-vocabulary.ts`. `PHASE_TO_CATEGORY`, the `hold` phase and the
+> seven status names (§3) landed in WP2. `customfield_11209` is in `OWNER_FIELD_CANDIDATES`.
+> `config/feed.ts` holds the column conventions and the level registry.
+>
+> **Deliberately not built.** `odata-client.ts`, `source.ts`, the `sync.ts` seam and
+> `diff-snapshots.ts` — Phase B onward. Nothing reaches the network.
+>
+> **Two blockers carried forward, both stated in `config/feed.ts` and reported at runtime:**
+>
+> 1. **`ISSUE_TYPE_LEVELS` is incomplete.** Seeded from the probe samples (five projects
+>    of nineteen); type IDs are per-project so it cannot be completed by reasoning. Until
+>    `scripts/capture-issue-types.ts` runs against REST, an unregistered type is a blocking
+>    diagnostic naming the ID, name and scope — by design (§3a), since the alternative is
+>    silent loss.
+> 2. **`BLOCKS_DIRECTION_MEANING` is `'unresolved'`** (§6). While it stays that way the
+>    adapter attributes **no** blockers from the feed and says so once per run. One
+>    observation against Jira settles it; `tests/feed-adapter.test.ts` already pins both
+>    the unresolved and resolved behaviours.
+
+- **Status:** Approved. Phase A is implemented (see above); Phases B–E are not.
 - **Date:** 2026-08-07
 - **Depends on:** [`adr-001-data-source.md`](adr-001-data-source.md) — Feed #3 is the target source.
 - **Still gated by:** governance (E4/E6/E8, service-account confirmation). This design can be

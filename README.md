@@ -85,6 +85,8 @@ That seam is `src/lib/repositories/`. Pages ask six read-only contracts for init
 
 Snapshots are written atomically (temp file + rename), so a failed sync never truncates a good snapshot. A stale-but-valid roadmap beats an empty one.
 
+`src/lib/feed/` is the other half of that seam: it turns Feed #3 records into the canonical model without touching risk, region or coverage logic — it *reuses* those functions rather than reimplementing them, which is why the source can change without any business rule changing. It is not connected to OData; it takes records already in hand, so it is fully testable today with no credential and no governance sign-off. Three values the feed cannot supply — hierarchy level, an unmapped status's phase, and blocker direction — are reported rather than guessed, because each wrong guess would be invisible on screen and confidently wrong.
+
 ### Layout
 
 | Path | Purpose |
@@ -94,13 +96,15 @@ Snapshots are written atomically (temp file + rename), so a failed sync never tr
 | `src/lib/` | Pure transformation logic — no I/O |
 | `src/lib/repositories/` | The only data-access point. Read-only async contracts for initiatives, items, sites, regions, coverage and source freshness; one wiring module chooses the implementation |
 | `src/lib/snapshot.ts` | Snapshot loading behind the repositories. Validates on read; reports `live` vs `fixture` |
+| `src/lib/feed/` | Feed #3 records → the canonical model. DTOs, validation outcomes, centralised normalisation, adapter. Not connected to OData |
+| `src/lib/spot-wiki.ts` | The SPOT narrative table as wiki markup (Feed #3), sharing one vocabulary with the ADF parser |
 | `src/lib/view-models/` | Pure snapshot → page props. All counting, grouping and geometry. Fully unit-tested |
 | `src/components/` | Presentational only. No aggregation, no wording of their own |
-| `src/fixtures/` | The committed fixture snapshot, covering the cases that break layouts |
+| `src/fixtures/` | The committed fixture snapshot and the representative Feed #3 records |
 | `app/` | Next.js App Router pages (Server Components) |
 | `scripts/sync.ts` | Fetch, transform, validate, write |
 | `scripts/verify-snapshot.ts` | The gate: baseline comparison + canaries |
-| `tests/` | 271 tests, including fixtures transcribed from real Jira payloads |
+| `tests/` | 327 tests, including fixtures transcribed from real Jira payloads and real feed rows |
 | `data/` | Generated snapshot (gitignored) |
 
 ## Four things that are easy to get wrong

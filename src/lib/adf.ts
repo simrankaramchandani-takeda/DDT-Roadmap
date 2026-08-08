@@ -1,5 +1,11 @@
 /**
- * Parser for the SPOT Description field (customfield_24265).
+ * Parser for the SPOT Description field, and the dispatcher in front of it.
+ *
+ * `parseSpotDescription` accepts the field in either transport: an ADF document from
+ * Jira REST, parsed here, or the wiki-markup string Feed #3 returns, delegated to
+ * `spot-wiki.ts`. Both produce the same `SpotNarrative`, so `transform.ts` never
+ * learns which source it is reading -- the reason the feed migration needs no change
+ * to the transformation layer.
  *
  * The field holds an Atlassian Document Format table synced from SPOT, with one
  * label/value row per attribute. Verified shape from DDTSG-55:
@@ -19,16 +25,17 @@
  * punctuation or casing drift in the SPOT sync does not silently drop content.
  */
 
-export interface SpotNarrative {
-  phase?: string;
-  state?: string;
-  statusDescription?: string;
-  recentAccomplishments?: string;
-  nextPriorities?: string;
-  sourceUrl?: string;
-  /** Labels found in the table that this parser does not map, for warnings. */
-  unmappedLabels: string[];
-}
+import { parseSpotWikiTable } from './spot-wiki.js';
+import {
+  labelKey,
+  LABEL_TO_FIELD,
+  SPOT_PLACEHOLDER_PATTERN,
+  type SpotNarrative,
+} from './spot-vocabulary.js';
+
+/** Re-exported so existing importers of `SpotNarrative` need no change. */
+export type { SpotNarrative } from './spot-vocabulary.js';
+export { labelKey, LABEL_TO_FIELD, SPOT_PLACEHOLDER_PATTERN } from './spot-vocabulary.js';
 
 interface AdfNode {
   type?: string;
@@ -37,28 +44,6 @@ interface AdfNode {
   attrs?: Record<string, unknown>;
   marks?: { type?: string; attrs?: Record<string, unknown> }[];
 }
-
-/** Canonical key for loose label matching. */
-function labelKey(label: string): string {
-  return label.toLowerCase().replace(/[^a-z0-9]+/g, '');
-}
-
-const LABEL_TO_FIELD: Readonly<Record<string, keyof Omit<SpotNarrative, 'unmappedLabels'>>> = {
-  projectphase: 'phase',
-  phase: 'phase',
-  projectstate: 'state',
-  state: 'state',
-  projecturl: 'sourceUrl',
-  url: 'sourceUrl',
-  overallstatusdescription: 'statusDescription',
-  overallstatus: 'statusDescription',
-  statusdescription: 'statusDescription',
-  recentaccomplishments: 'recentAccomplishments',
-  accomplishments: 'recentAccomplishments',
-  nextpriorities: 'nextPriorities',
-  priorities: 'nextPriorities',
-  nextsteps: 'nextPriorities',
-};
 
 /**
  * Extracts text from a node tree, preserving line breaks. SPOT status
@@ -139,12 +124,19 @@ function findTableRows(root: AdfNode): AdfNode[] {
 }
 
 /**
- * Parses the SPOT Description ADF into structured narrative fields.
- * Returns undefined when the value is absent or contains no recognisable table --
- * a shape change in the SPOT sync should degrade to "no narrative", never throw
- * and abort a sync of 645 items.
+ * Parses the SPOT Description field into structured narrative fields, from whichever
+ * transport it arrived in.
+ *
+ * Returns undefined when the value is absent or contains no recognisable table -- a
+ * shape change in the SPOT sync should degrade to "no narrative", never throw and
+ * abort a sync of 645 items.
  */
 export function parseSpotDescription(raw: unknown): SpotNarrative | undefined {
+  // Feed #3 returns the table as the wiki markup Jira stores underneath. Dispatching
+  // here rather than in `transform.ts` is what keeps the transformation layer
+  // source-agnostic.
+  if (typeof raw === 'string') return parseSpotWikiTable(raw);
+
   if (raw == null || typeof raw !== 'object') return undefined;
 
   const root = raw as AdfNode;
@@ -182,7 +174,7 @@ export function parseSpotDescription(raw: unknown): SpotNarrative | undefined {
 
     const value = extractText(valueCell);
     // Skip placeholder values so an empty SPOT row does not masquerade as content.
-    if (!value || /^(n\/?a|none|tbd|-)$/i.test(value)) continue;
+    if (!value || SPOT_PLACEHOLDER_PATTERN.test(value)) continue;
 
     result[field] = value;
     matched++;

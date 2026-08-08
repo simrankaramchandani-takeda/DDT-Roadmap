@@ -173,6 +173,10 @@ export const OWNER_FIELD_CANDIDATES: readonly { id: string; role: string }[] = [
   { id: 'customfield_10487', role: 'IT Lead' },
   { id: 'customfield_19884', role: 'Business Owner' },
   { id: 'customfield_10489', role: 'Business Owner' },
+  // Feed #3 exports this as a multi-user side table (`Business_Application_Owner_11209`).
+  // Listed here so the owner resolves identically through either source, and so the
+  // REST path requests it too rather than the two sources disagreeing on owners.
+  { id: 'customfield_11209', role: 'Business Application Owner' },
   { id: 'customfield_10540', role: 'Validation Lead' },
   { id: 'customfield_15786', role: 'Sponsor' },
 ] as const;
