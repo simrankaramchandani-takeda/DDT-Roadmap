@@ -13,10 +13,10 @@
 
 import type { CSSProperties, ReactElement } from 'react';
 
-import type { SnapshotSource } from '@/lib/snapshot.js';
+import type { DataSourceKind } from '@/lib/repositories/index.js';
 
 export interface SourceIndicatorProps {
-  source: SnapshotSource;
+  source: DataSourceKind;
   /** Snapshot `syncedAt`, ISO timestamp. */
   syncedAt: string;
   /** Snapshot `asOf`, YYYY-MM-DD -- the date risk was evaluated against. */

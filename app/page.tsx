@@ -9,7 +9,7 @@
 
 import type { ReactElement } from 'react';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildOverviewModel } from '@/lib/view-models/overview.js';
 import { fiscalYearOptions, parseFilters, serialiseFilters, type RawSearchParams } from '@/lib/view-models/filters.js';
 import { HEALTH_DISPLAY } from '@/lib/view-models/health.js';
@@ -24,7 +24,7 @@ export default async function OverviewPage({
 }): Promise<ReactElement> {
   const params = await searchParams;
   const filters = parseFilters(params);
-  const { snapshot, source } = loadSnapshot();
+  const { snapshot, source } = await loadRoadmapView();
   const model = buildOverviewModel(snapshot, filters);
   const query = serialiseFilters(filters);
 

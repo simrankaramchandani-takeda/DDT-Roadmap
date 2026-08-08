@@ -13,14 +13,14 @@
 
 import type { ReactElement } from 'react';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildDataModel } from '@/lib/view-models/data.js';
 import { HealthMark } from '@/components/HealthMark.js';
 import { Card, EmptyState, Notice, StatTile, TableView } from '@/components/Primitives.js';
 import { Shell, SiteHeader } from '@/components/Shell.js';
 
-export default function DataPage(): ReactElement {
-  const { snapshot, source } = loadSnapshot();
+export default async function DataPage(): Promise<ReactElement> {
+  const { snapshot, source } = await loadRoadmapView();
   const model = buildDataModel(snapshot);
 
   return (

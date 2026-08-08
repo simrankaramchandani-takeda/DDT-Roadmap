@@ -1,11 +1,14 @@
 /**
- * The single data-access seam for the application.
+ * Snapshot loading -- the storage detail behind the repository layer.
  *
- * Nothing in the UI reads the filesystem, and nothing constructs a Snapshot. Every
- * page goes through `loadSnapshot()`. That keeps three later concerns cheap:
- *   - row-level authorisation becomes a filter here, not a schema change;
- *   - swapping the snapshot for a database is a change to this file only;
- *   - the source of the data is always known and always reportable.
+ * WP3 MOVED THE SEAM UP. This file used to be the application's only data-access
+ * point; it is now the only *snapshot* access point, and the seam the app sees is
+ * `src/lib/repositories/`. Nothing under `app/` imports this module any more. That
+ * matters because the next source is a feed rather than a file, and a feed cannot be
+ * expressed as a `readFileSync`. The properties this file was built for are unchanged:
+ *   - row-level authorisation becomes a filter, not a schema change;
+ *   - the source of the data is always known and always reportable;
+ *   - swapping the storage is a change confined to one module.
  *
  * VALIDATION IS NOT OPTIONAL. A snapshot is validated with `snapshotSchema` on the
  * way in, exactly as `scripts/sync.ts` validates on the way out. A snapshot that
@@ -24,9 +27,15 @@ import path from 'node:path';
 
 import { FIXTURE_SNAPSHOT } from '@/fixtures/snapshot.fixture.js';
 import { snapshotSchema, type Snapshot } from '@/types/domain.js';
+import type { DataSourceKind } from './repositories/types.js';
 
-/** Where the served snapshot came from. Never hide this from the user. */
-export type SnapshotSource = 'live' | 'fixture';
+/**
+ * Where the served snapshot came from. Never hide this from the user.
+ *
+ * Aliased to the repository contract's `DataSourceKind` rather than restated, so the
+ * loader and the repository layer cannot come to disagree about what sources exist.
+ */
+export type SnapshotSource = DataSourceKind;
 
 export interface LoadedSnapshot {
   snapshot: Snapshot;

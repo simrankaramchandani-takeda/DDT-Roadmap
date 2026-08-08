@@ -6,13 +6,13 @@
 
 import type { ReactElement } from 'react';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildSiteIndex } from '@/lib/view-models/site.js';
 import { Card } from '@/components/Primitives.js';
 import { Shell, SiteHeader } from '@/components/Shell.js';
 
-export default function SitesPage(): ReactElement {
-  const { snapshot, source } = loadSnapshot();
+export default async function SitesPage(): Promise<ReactElement> {
+  const { snapshot, source } = await loadRoadmapView();
   const rows = buildSiteIndex(snapshot);
 
   const byRegion = new Map<string, typeof rows>();

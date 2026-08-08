@@ -56,10 +56,12 @@ Set `SNAPSHOT_AS_OF=YYYY-MM-DD` to pin the date risk is evaluated against, for r
 ## Architecture
 
 ```
-Jira REST v3 ─> scripts/sync.ts ─> data/snapshot.json ─> src/lib/snapshot.ts ─> view models ─> app/
-                      │                    │                (the only         (pure,        (Server
-                      │                    │                 data seam)        tested)       Components)
-                      └─ src/lib/*  pure, tested transformation
+Jira REST v3 ─> scripts/sync.ts ─> data/snapshot.json ─> src/lib/snapshot.ts ─┐
+                      │                    │                                  │
+                      └─ src/lib/*  pure, tested transformation               ▼
+                                                            src/lib/repositories/ ─> view models ─> app/
+                                                              (the only data seam)   (pure,       (Server
+                                                                                      tested)     Components)
 ```
 
 The layering is strictly one-directional and each rule prevents a known failure: **no component
@@ -79,6 +81,8 @@ against a floor of 8, so health is always colour *plus* glyph *plus* label.
 
 The app never queries Jira at request time. A scheduled sync writes a validated snapshot; everything downstream reads that. This keeps page loads fast, works offline for demos, keeps credentials out of the browser, and makes the data layer a single seam to swap for a database later.
 
+That seam is `src/lib/repositories/`. Pages ask six read-only contracts for initiatives, items, sites, regions, coverage and source freshness; a composition root assembles the snapshot shape the view models already accept. The contracts are async so that a feed-backed implementation is a wiring change rather than a contract break — nothing above the composition root knows whether the data came from a file or a network call.
+
 Snapshots are written atomically (temp file + rename), so a failed sync never truncates a good snapshot. A stale-but-valid roadmap beats an empty one.
 
 ### Layout
@@ -88,14 +92,15 @@ Snapshots are written atomically (temp file + rename), so a failed sync never tr
 | `config/` | Every decision that could change: projects, regions, field IDs, fiscal year, status map, taxonomy, wording |
 | `src/types/domain.ts` | Domain model + Zod schemas (the sync/read contract) |
 | `src/lib/` | Pure transformation logic — no I/O |
-| `src/lib/snapshot.ts` | The only data-access point. Validates on read; reports `live` vs `fixture` |
+| `src/lib/repositories/` | The only data-access point. Read-only async contracts for initiatives, items, sites, regions, coverage and source freshness; one wiring module chooses the implementation |
+| `src/lib/snapshot.ts` | Snapshot loading behind the repositories. Validates on read; reports `live` vs `fixture` |
 | `src/lib/view-models/` | Pure snapshot → page props. All counting, grouping and geometry. Fully unit-tested |
 | `src/components/` | Presentational only. No aggregation, no wording of their own |
 | `src/fixtures/` | The committed fixture snapshot, covering the cases that break layouts |
 | `app/` | Next.js App Router pages (Server Components) |
 | `scripts/sync.ts` | Fetch, transform, validate, write |
 | `scripts/verify-snapshot.ts` | The gate: baseline comparison + canaries |
-| `tests/` | 254 tests, including fixtures transcribed from real Jira payloads |
+| `tests/` | 271 tests, including fixtures transcribed from real Jira payloads |
 | `data/` | Generated snapshot (gitignored) |
 
 ## Four things that are easy to get wrong
@@ -173,10 +178,10 @@ Out of MVP scope, but nothing here precludes it:
 
 | Concern | Path |
 |---|---|
-| SSO | All data access is server-side behind `src/lib/snapshot.ts`; no client secrets. Additive. |
-| Row-level authorisation | Region and site are first-class on every item, so scoping is a loader filter, not a schema change. |
+| SSO | All data access is server-side behind `src/lib/repositories/`; no client secrets. Additive. |
+| Row-level authorisation | Region and site are first-class on every item, so scoping is a repository filter, not a schema change. |
 | Hosting | Stateless, no request-time filesystem writes. |
-| Scale | The snapshot loader is the seam for a database; rollups are pure functions over arrays. |
+| Scale | The repository layer is the seam for a database or a feed; rollups are pure functions over arrays. |
 | Multiple portfolios | `config/projects.ts` holds a `portfolios[]` array. `DDT Bio Portfolio` was investigated and no longer exists, but a future one is a single config entry. |
 
 ## Known gaps

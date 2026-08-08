@@ -6,14 +6,14 @@
 
 import type { ReactElement } from 'react';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildInitiativeIndex } from '@/lib/view-models/initiative.js';
 import { HealthMark } from '@/components/HealthMark.js';
 import { Card } from '@/components/Primitives.js';
 import { Shell, SiteHeader } from '@/components/Shell.js';
 
-export default function InitiativesPage(): ReactElement {
-  const { snapshot, source } = loadSnapshot();
+export default async function InitiativesPage(): Promise<ReactElement> {
+  const { snapshot, source } = await loadRoadmapView();
   const rows = buildInitiativeIndex(snapshot);
 
   return (

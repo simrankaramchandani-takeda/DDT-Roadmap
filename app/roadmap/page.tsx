@@ -8,7 +8,7 @@
 
 import type { ReactElement } from 'react';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildGlobalRoadmapModel } from '@/lib/view-models/roadmap.js';
 import { fiscalYearOptions, parseFilters, type RawSearchParams } from '@/lib/view-models/filters.js';
 import { HEALTH_DISTRIBUTION_ORDER } from '@/lib/view-models/health.js';
@@ -24,7 +24,7 @@ export default async function GlobalRoadmapPage({
 }): Promise<ReactElement> {
   const params = await searchParams;
   const filters = parseFilters(params);
-  const { snapshot, source } = loadSnapshot();
+  const { snapshot, source } = await loadRoadmapView();
   const model = buildGlobalRoadmapModel(snapshot, filters);
 
   return (

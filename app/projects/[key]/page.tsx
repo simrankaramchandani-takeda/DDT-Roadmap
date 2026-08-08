@@ -12,7 +12,7 @@
 import type { ReactElement } from 'react';
 import { notFound } from 'next/navigation';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildProjectModel } from '@/lib/view-models/project.js';
 import { HealthMark } from '@/components/HealthMark.js';
 import { Card, EmptyState, Notice, ProvenanceChip } from '@/components/Primitives.js';
@@ -25,7 +25,7 @@ export default async function ProjectPage({
 }): Promise<ReactElement> {
   const { key } = await params;
   const decoded = decodeURIComponent(key);
-  const { snapshot, source } = loadSnapshot();
+  const { snapshot, source } = await loadRoadmapView();
   const model = buildProjectModel(snapshot, decoded);
 
   if (!model) notFound();

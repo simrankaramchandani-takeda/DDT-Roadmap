@@ -9,14 +9,14 @@
 
 import type { ReactElement } from 'react';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildRegionIndex } from '@/lib/view-models/region.js';
 import { HealthMark } from '@/components/HealthMark.js';
 import { Card, EmptyState } from '@/components/Primitives.js';
 import { Shell, SiteHeader } from '@/components/Shell.js';
 
-export default function RegionsPage(): ReactElement {
-  const { snapshot, source } = loadSnapshot();
+export default async function RegionsPage(): Promise<ReactElement> {
+  const { snapshot, source } = await loadRoadmapView();
   const rows = buildRegionIndex(snapshot);
 
   return (

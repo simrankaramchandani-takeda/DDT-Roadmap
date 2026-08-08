@@ -90,8 +90,12 @@ day one; every screen then has a regression fixture for free.
 data/snapshot.json
    │  (validated on read — a snapshot that does not parse is never served)
    ▼
-src/lib/snapshot.ts          loadSnapshot(), cached per process. THE only data access point.
+src/lib/snapshot.ts          loadSnapshot(), cached per process. Storage detail only.
    │
+   ▼
+src/lib/repositories/        THE only data access point (WP3). Read-only async contracts;
+   │                         one wiring module selects the implementation, and the
+   │                         composition root assembles the Snapshot the view models take.
    ▼
 src/lib/view-models/*.ts     PURE snapshot -> page props. No React, no I/O. Fully unit-tested.
    │

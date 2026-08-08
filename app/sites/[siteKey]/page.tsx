@@ -10,7 +10,7 @@
 import type { ReactElement } from 'react';
 import { notFound } from 'next/navigation';
 
-import { loadSnapshot } from '@/lib/snapshot.js';
+import { loadRoadmapView } from '@/lib/repositories/index.js';
 import { buildSiteModel } from '@/lib/view-models/site.js';
 import { fiscalYearOptions, parseFilters, type RawSearchParams } from '@/lib/view-models/filters.js';
 import { HEALTH_DISTRIBUTION_ORDER } from '@/lib/view-models/health.js';
@@ -28,7 +28,7 @@ export default async function SitePage({
 }): Promise<ReactElement> {
   const { siteKey } = await params;
   const filters = parseFilters(await searchParams);
-  const { snapshot, source } = loadSnapshot();
+  const { snapshot, source } = await loadRoadmapView();
   const model = buildSiteModel(snapshot, siteKey, filters);
 
   if (!model) notFound();

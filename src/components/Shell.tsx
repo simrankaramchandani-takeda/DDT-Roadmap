@@ -14,7 +14,7 @@ import { REGIONS } from '@config/regions.js';
 import type { SiteSummary } from '@/types/domain.js';
 import { serialiseFilters, withFilter, type Filters, type RiskFilter, type ScopeFilter } from '@/lib/view-models/filters.js';
 import { SourceIndicator } from './SourceIndicator.js';
-import type { SnapshotSource } from '@/lib/snapshot.js';
+import type { DataSourceKind } from '@/lib/repositories/index.js';
 
 const NAV = [
   { href: '/', label: 'Overview' },
@@ -31,7 +31,7 @@ export function SiteHeader({
   asOf,
   current,
 }: {
-  source: SnapshotSource;
+  source: DataSourceKind;
   syncedAt: string;
   asOf: string;
   current: string;
