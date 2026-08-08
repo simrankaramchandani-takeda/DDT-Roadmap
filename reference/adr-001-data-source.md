@@ -386,6 +386,53 @@ believed, which changes the product's value proposition, not just its plumbing.
    parse it**. A sibling parser is required. This is a real adapter cost that the migration table
    above does not account for.
 
+### First application read, 2026-08-08 — what real data settled
+
+The WP5 connection layer read Feed #3 through the application's own client, adapter and
+repositories (`npm run validate-feed3`). Everything below is measured over all 1371 rows,
+not sampled. The three regressions above were all reconfirmed.
+
+**Shape held exactly.** 11 entity sets, 119 `Issues` columns, no `IssueStatuses`, no
+`PARENT_ISSUE_*`. Row counts: `Issues` 1371, `IssueTypes` 894, `IssueLinks` 668, `Labels`
+395, `Business_Owner_10489` 10, `Business_Application_Owner_11209` 0. Identical to the
+2026-08-07 survey, so the export has not been reconfigured in the interim.
+
+**Four assumptions became evidence:**
+
+| Was | Now |
+|---|---|
+| `Labels` value column UNVERIFIED, coalesced over four candidates | `Labels` is `ISSUE_ID, ISSUE_KEY, NAME`. `NAME` resolves. |
+| `SITE_KEY_ALIASES` empty on probe evidence | Re-verified over 1371 rows: every `PROJECT_KEY` matched a config key verbatim, no trimming or case correction needed. |
+| Date formats assumed `YYYY-MM-DD` and ISO timestamps | Confirmed, with **zero** ambiguous or unrecognised values. `DUE_DATE` date-only on 781/1371; `CREATED`/`UPDATED`/`STATUS_CATEGORY_CHANGE_DATE` ISO-8601 UTC on all 1371; `RESOLUTION_DATE` ISO-8601 UTC on 418. |
+| Owners "covered by `CURRENT_ASSIGNEE_NAME` plus a `Business_Owner_10489` entity set" | **Materially weaker than stated.** `Business_Owner_10489` carries 10 rows over 10 issues; `Business_Application_Owner_11209` is exported but **empty**; none of the other six `OWNER_FIELD_CANDIDATES` is exported as an `Issues` column. Owner attribution rests almost entirely on `CURRENT_ASSIGNEE_NAME`. |
+
+**Two new findings:**
+
+1. **A paging edge case, not documented by the vendor.**
+   `Business_Application_Owner_11209` answers with an **empty page that still carries an
+   `@odata.nextLink`**. A client that treated "no rows" as "last page" would be correct
+   here by luck and would silently truncate wherever an empty intermediate page occurs.
+   The client follows `nextLink` regardless of row count, and `tests/odata-source.test.ts`
+   pins it.
+
+2. **Four status names occur that `STATUS_NAME_TO_PHASE` does not map** — `ADM` (6 rows),
+   `ONGOING` (3), `PRD TEST` (3), `QA TEST` (1). **All four are out of scope**, so the
+   in-scope unmapped count is **zero** and the 17-name enumeration in §3 of design-001 is
+   complete. Worth recording because `UNMAPPED_STATUS_IS_FATAL` makes an in-scope
+   appearance a blocking condition.
+
+**The measured cost of the incomplete type registry.** 36 distinct in-scope
+`ISSUE_TYPE_ID`s were absent from `ISSUE_TYPE_LEVELS`, affecting **918 of 1371 rows** and
+leaving **17 of 18 sites with zero roadmap items**. This is the registry behaving as
+designed — loudly — and it is the single largest blocker to serving from this feed. Adding
+the six IDs with observed REST metadata took items from 24 to 157 and sites with work from
+1 to 4; 33 IDs remain, and they need `npm run capture-issue-types` against Jira REST.
+
+**Confirmed working on real data:** initiative alignment via `Polaris work item link`,
+site and region resolution for every exported project, `DDTJG` filtered as out-of-scope
+noise, wiki-markup SPOT narratives, and the `hold` phase. No project alias, no unmapped
+site, and no duplicate record was found.
+
 ### Hierarchy level: non-blocking for alignment, still required for selection
 
 `hierarchy` appears **zero times** in Feed #3's 57 KB EDMX, and its `IssueTypes` is identical to

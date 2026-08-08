@@ -1,8 +1,8 @@
 # Design-001: OData adapter for Feed #3
 
-> ## Implementation status after WP4 (2026-08-08)
+> ## Implementation status after WP5 (2026-08-08)
 >
-> **Built — the transformation layer, no connection.** `src/lib/feed/` implements the
+> **Built — the transformation layer AND the connection.** `src/lib/feed/` implements the
 > Feed DTOs, three-state validation outcomes, centralised normalisation and the adapter
 > that emits `JiraIssue[]` and then the canonical model. `src/lib/spot-wiki.ts` and the
 > `parseSpotDescription` dispatcher (§4) are done, sharing one vocabulary with the ADF
@@ -10,20 +10,38 @@
 > seven status names (§3) landed in WP2. `customfield_11209` is in `OWNER_FIELD_CANDIDATES`.
 > `config/feed.ts` holds the column conventions and the level registry.
 >
-> **Deliberately not built.** `odata-client.ts`, `source.ts`, the `sync.ts` seam and
-> `diff-snapshots.ts` — Phase B onward. Nothing reaches the network.
+> WP5 added `odata-client.ts` (GET-only, `@odata.nextLink` paging, retry, redaction),
+> `source.ts` (service-document discovery → `Feed3Payload`, plus a shape guard), and
+> `odata-repositories.ts` (lazy, TTL-bounded, serving the WP3 contracts). Selection is
+> `ROADMAP_SOURCE`, defaulting to `snapshot`. **Verified end to end against the live feed
+> on 2026-08-08:** 1371 rows over 11 entity sets, 119 columns, and all eight prerendered
+> screens render from feed data with no change to any page, view model or business rule.
 >
-> **Two blockers carried forward, both stated in `config/feed.ts` and reported at runtime:**
+> **Naming note.** This document proposed `src/lib/odata-client.ts` and `config/odata.ts`
+> (§1, §7). WP4 had already established `src/lib/feed/` as the layer, so the modules landed
+> there and the connection config reads from the environment via `loadODataConfig` rather
+> than a config file — `config/feed.ts` states that it must never hold a URL or credential.
 >
-> 1. **`ISSUE_TYPE_LEVELS` is incomplete.** Seeded from the probe samples (five projects
->    of nineteen); type IDs are per-project so it cannot be completed by reasoning. Until
->    `scripts/capture-issue-types.ts` runs against REST, an unregistered type is a blocking
->    diagnostic naming the ID, name and scope — by design (§3a), since the alternative is
->    silent loss.
+> **Deliberately not built.** The `sync.ts` seam and `diff-snapshots.ts` — the Phase C
+> parity gate. Snapshot remains the default source.
+>
+> **Blockers carried forward, all stated in `config/feed.ts` and reported at runtime:**
+>
+> 1. **`ISSUE_TYPE_LEVELS` is incomplete, and this is now MEASURED rather than estimated.**
+>    The first real read found **33 unregistered in-scope type IDs affecting 785 of 1371
+>    rows, leaving 14 of 18 sites with zero roadmap items.** WP5 added the six IDs that
+>    have observed REST metadata in `tests/fixtures/jira-issues.ts` (taking items from 24
+>    to 157 and sites with work from 1 to 4); the rest need
+>    `npm run capture-issue-types`, which requires a `JIRA_API_TOKEN` that is not
+>    currently configured. An unregistered type stays a blocking diagnostic naming the ID,
+>    name and scope — by design (§3a), since the alternative is silent loss.
 > 2. **`BLOCKS_DIRECTION_MEANING` is `'unresolved'`** (§6). While it stays that way the
 >    adapter attributes **no** blockers from the feed and says so once per run. One
 >    observation against Jira settles it; `tests/feed-adapter.test.ts` already pins both
 >    the unresolved and resolved behaviours.
+> 3. **Governance — E4, E6, E8 remain open.** Building and running the client behind a
+>    non-default flag is migration step 4. Making OData the default is step 6 and must not
+>    ship without sign-off.
 
 - **Status:** Approved. Phase A is implemented (see above); Phases B–E are not.
 - **Date:** 2026-08-07

@@ -18,6 +18,7 @@
  * field added to the domain model cannot be silently dropped on the way through.
  */
 
+import { createODataRepositories } from '@/lib/feed/odata-repositories.js';
 import type { Snapshot } from '@/types/domain.js';
 
 import { createDefaultRepositories } from './snapshot-repositories.js';
@@ -49,13 +50,35 @@ export {
 let configured: RoadmapRepositories | undefined;
 let fallback: RoadmapRepositories | undefined;
 
+/** Where the application reads its data from. */
+export type RoadmapSource = 'snapshot' | 'odata';
+
+/**
+ * Resolves the source from the environment.
+ *
+ * SNAPSHOT IS THE DEFAULT, AND THAT IS A GOVERNANCE DECISION RATHER THAN A TECHNICAL
+ * ONE. ADR-001's E4, E6 and E8 are open: there is no statement that the existing
+ * entitlement covers consumption by an application rather than by Power BI, no named
+ * data owner, and no precedent for a non-BI consumer. Migration step 4 -- build the
+ * client and adapter behind a flag, REST/snapshot staying default -- may proceed without
+ * that sign-off; flipping the default is step 6 and may not. So this reads an explicit
+ * opt-in and never infers one.
+ */
+export function resolveSource(env: NodeJS.ProcessEnv = process.env): RoadmapSource {
+  return env['ROADMAP_SOURCE']?.trim().toLowerCase() === 'odata' ? 'odata' : 'snapshot';
+}
+
 /**
  * The repository set in force. Defaults to the snapshot-backed implementation, built
  * once per process and lazily, so importing this module reads nothing.
+ *
+ * Both implementations are free to construct: the OData set performs no I/O until a
+ * method is called, so selecting it here cannot make an import reach the network.
  */
 export function getRepositories(): RoadmapRepositories {
   if (configured) return configured;
-  fallback ??= createDefaultRepositories();
+  fallback ??=
+    resolveSource() === 'odata' ? createODataRepositories().repositories : createDefaultRepositories();
   return fallback;
 }
 

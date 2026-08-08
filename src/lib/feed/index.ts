@@ -66,3 +66,31 @@ export {
 } from './adapter.js';
 
 export { createFeedRepositories, type FeedRepositories } from './repositories.js';
+
+export {
+  createODataClient,
+  loadODataConfig,
+  redactFeedUrl,
+  redactText,
+  ODataError,
+  type FetchLike,
+  type ODataAuthMode,
+  type ODataClient,
+  type ODataClientOptions,
+  type ODataConfig,
+} from './odata-client.js';
+
+export {
+  inspectFeedShape,
+  readFeed3,
+  DEFAULT_FEED_LABEL,
+  type Feed3Read,
+  type ReadFeed3Options,
+} from './source.js';
+
+export {
+  createODataRepositories,
+  type ODataAdaptation,
+  type ODataRepositories,
+  type ODataRepositoriesOptions,
+} from './odata-repositories.js';

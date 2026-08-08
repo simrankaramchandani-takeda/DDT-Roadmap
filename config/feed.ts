@@ -44,6 +44,17 @@ export const FEED_ENTITY_SETS = {
  * Each becomes `fields['customfield_<id>'] = [{ displayName }, ...]`, which is the
  * shape `extractScalar` already walks -- so `normaliseOwners` needs no feed
  * awareness.
+ *
+ * MEASURED POPULATION, live read 2026-08-08. Both tables are exported and both are
+ * nearly empty: `Business_Owner_10489` carries 10 rows over 10 issues, and
+ * `Business_Application_Owner_11209` carries ZERO. None of the remaining six
+ * `OWNER_FIELD_CANDIDATES` is exported as an `Issues` column either. So owner attribution
+ * on this feed rests almost entirely on `CURRENT_ASSIGNEE_NAME`.
+ *
+ * Both entries are retained deliberately. An exported-but-empty table is a fact about
+ * today's data, not about the schema: removing `11209` would mean re-deriving it the day
+ * the field starts being populated, and the join costs one request against a table with
+ * no rows in it.
  */
 export const FEED_OWNER_SIDE_TABLES: readonly { entitySet: string; fieldId: string }[] = [
   { entitySet: 'Business_Owner_10489', fieldId: 'customfield_10489' },
@@ -80,10 +91,10 @@ export const NON_CUSTOM_FIELD_COLUMNS: readonly string[] = [] as const;
 /**
  * Column candidates for a label's text in the `Labels` side table.
  *
- * UNVERIFIED: the probe captured `Issues` columns only, so the label column's name is
- * not directly evidenced. Coalescing over candidates costs nothing and fails soft --
- * a miss loses the `FY\d{2}` label fallback, which `transform.ts` already treats as
- * optional, rather than aborting.
+ * VERIFIED 2026-08-08 against the live feed: `Labels` carries exactly
+ * `ISSUE_ID, ISSUE_KEY, NAME` over 395 rows, so `NAME` resolves. The other candidates are
+ * retained because coalescing costs nothing and fails soft -- a miss loses the `FY\d{2}`
+ * label fallback, which `transform.ts` already treats as optional, rather than aborting.
  */
 export const FEED_LABEL_VALUE_COLUMNS: readonly string[] = ['LABEL', 'LABEL_NAME', 'NAME', 'VALUE'] as const;
 
@@ -134,42 +145,62 @@ export const UNMAPPED_STATUS_IS_FATAL = true;
  * application, because a site then looks like it has no work. The registry makes an
  * unknown type ID a loud, blocking error instead.
  *
- * THIS MAP IS INCOMPLETE AND KNOWN TO BE. The entries below are transcribed from the
- * probe samples under `data/probe-feed*`, which cover five projects out of nineteen.
- * Type IDs are PER-PROJECT in team-managed projects -- `Epic` alone appears as 18380
- * (DDTORA) and 14598 (another project) -- so this cannot be completed by reasoning,
- * only by capture. Seed the full map from Jira REST `/rest/api/3/issuetype`, which
- * does return `hierarchyLevel`, before the feed is connected.
+ * THIS MAP IS INCOMPLETE AND KNOWN TO BE. Type IDs are PER-PROJECT in team-managed
+ * projects -- `Epic` alone appears as 18380 (DDTORA), 18329 (DDTGC), 19568 (DDTSG) and
+ * 21576 (DDTHIK) -- so this cannot be completed by reasoning, only by capture. There is
+ * no arithmetic and no naming rule connecting them.
  *
- * Until then the adapter reports every unknown ID with its name and scope, so the
- * capture list writes itself on the first run.
+ * MEASURED GAP, from the first real read of Feed #3 on 2026-08-08
+ * (`npm run validate-feed3`): 36 distinct in-scope type IDs are absent from this map,
+ * affecting 918 of 1371 rows and leaving 17 of 18 sites with zero roadmap items. That is
+ * the registry being incomplete behaving exactly as designed -- loudly -- rather than a
+ * regression.
+ *
+ * EVERY ENTRY BELOW IS OBSERVED, NEVER INFERRED. Each is annotated with where its
+ * `hierarchyLevel` was seen. Two provenances appear:
+ *   - `probe`  -- the OData probe samples under `data/probe-feed*`.
+ *   - `REST`   -- Jira REST payloads transcribed during discovery on 2026-08-05 and
+ *                 retained in `tests/fixtures/jira-issues.ts`, whose header records that
+ *                 issue type IDs and hierarchy levels are as returned by the API.
+ *
+ * Complete the rest with `npm run capture-issue-types`, which reads
+ * `/rest/api/3/issuetype` -- the only source that returns `hierarchyLevel` -- and prints
+ * a pasteable replacement for this block. Until then the adapter reports every unknown ID
+ * with its name and scope, so the capture list writes itself on each run.
  *
  * IDs are stable; names are not. Never key this on a name.
  */
 export const ISSUE_TYPE_LEVELS: Readonly<Record<string, number>> = {
   // --- level 2: portfolio initiative ---
-  '10269': 2, // Initiative (DDTGMPORT)
+  '10269': 2, // Initiative (DDTGMPORT) -- probe, REST
   // --- level 1: roadmap item ---
-  '18380': 1, // Epic (DDTORA)
-  '14598': 1, // Epic
+  '18380': 1, // Epic (DDTORA) -- probe
+  '14598': 1, // Epic -- probe, REST
+  '18329': 1, // Epic (DDTGC) -- REST
+  '19568': 1, // Epic (DDTSG) -- REST
+  '21576': 1, // Epic (DDTHIK) -- REST
+  '12048': 1, // Digital Project -- REST. A project-local level-1 type NOT named "Epic";
+  //           the exact shape the hierarchy model exists to catch.
   // --- level 0: operational detail, expected to be dropped ---
-  '14269': 0, // Story (NEUCHDDT)
-  '13182': 0, // Story
-  '13206': 0, // Story
-  '13480': 0, // Story
-  '13290': 0, // Technical Story
-  '12493': 0, // Task
-  '13268': 0, // Task
-  '13370': 0, // Task
-  '12158': 0, // Bug
-  '13568': 0, // Bug
-  '21728': 0, // Bug
+  '14269': 0, // Story (NEUCHDDT) -- probe
+  '13182': 0, // Story -- probe
+  '13206': 0, // Story -- probe
+  '13480': 0, // Story -- probe
+  '13290': 0, // Technical Story -- probe
+  '12493': 0, // Task -- probe
+  '13268': 0, // Task -- probe
+  '13370': 0, // Task -- probe
+  '12158': 0, // Bug -- probe
+  '13568': 0, // Bug -- probe
+  '21728': 0, // Bug -- probe
+  '19570': 0, // Story (DDTSG) -- REST
   // --- level -1: subtask ---
-  '14271': -1, // Subtask (NEUCHDDT)
-  '11095': -1, // Subtask
-  '13416': -1, // Subtask
-  '13766': -1, // Subtask
-  '22043': -1, // Subtask
+  '14271': -1, // Subtask (NEUCHDDT) -- probe
+  '11095': -1, // Subtask -- probe
+  '13416': -1, // Subtask -- probe
+  '13766': -1, // Subtask -- probe
+  '22043': -1, // Subtask -- probe
+  '19571': -1, // Subtask (DDTSG) -- REST
 } as const;
 
 /** Stated in diagnostics so an incomplete registry is never mistaken for a complete one. */
@@ -211,9 +242,11 @@ export const FEED_BLOCKING_LINK_TYPES: readonly string[] = ['blocks', 'is blocke
 /**
  * Feed `PROJECT_KEY` -> the key used in config/projects.ts.
  *
- * Empty, because the probe found the feed's keys identical to Jira's. Kept as the
- * single declared place for a divergence so that if the feed ever exports a renamed
- * or legacy key, the fix is one entry here rather than a special case in the adapter.
+ * Empty, because the probe found the feed's keys identical to Jira's. RE-VERIFIED
+ * 2026-08-08 over all 1371 live rows: every exported `PROJECT_KEY` matched a config key
+ * verbatim, with no trimming or case correction required. Kept as the single declared
+ * place for a divergence so that if the feed ever exports a renamed or legacy key, the
+ * fix is one entry here rather than a special case in the adapter.
  *
  * Resolution also trims and upper-cases, which is real tolerance rather than
  * speculation: OData exports have been seen to pad fixed-width string columns.
