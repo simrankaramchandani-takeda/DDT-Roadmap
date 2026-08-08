@@ -205,19 +205,29 @@ describe('values that cannot be inferred are reported, never guessed', () => {
   });
 
   it('attributes no blocker at all while the Blocks direction is unresolved', () => {
-    // DDTSG-1 has a Blocks row. Guessing DIRECTION would invert every attribution,
-    // making blocking items look blocked. A visible gap beats an invisible inversion.
-    expect(itemsOf().every((i) => i.blockers.length === 0)).toBe(true);
-    expect(adapt().tally['unsupported-value']).toBeGreaterThan(0);
+    // No longer the default -- BLOCKS_DIRECTION_MEANING was resolved against real Jira
+    // links on 2026-08-08 -- but the safe fallback stays covered, because it is what
+    // must happen if a future feed change makes the mapping uncertain again. Guessing
+    // DIRECTION would invert every attribution, making blocking items look blocked.
+    const unresolved = adaptFeedSnapshot(FEED3_FIXTURE, { ...OPTIONS, blocksDirection: 'unresolved' });
+    expect(unresolved.snapshot.items.every((i) => i.blockers.length === 0)).toBe(true);
+    expect(unresolved.tally['unsupported-value']).toBeGreaterThan(0);
   });
 
-  it('attributes blockers once the direction is established', () => {
-    // Setting one constant is the whole change. Pinned here so the resolution has a
-    // regression test waiting for it.
-    const resolved = adaptFeedSnapshot(FEED3_FIXTURE, { ...OPTIONS, blocksDirection: 'inward-is-blocked' });
-    const blocked = resolved.snapshot.items.find((i) => i.key === 'DDTSG-1');
-    expect(blocked?.blockers.map((b) => b.key)).toEqual(['DDTGC-1']);
-    expect(blocked?.blockers[0]?.open).toBe(true);
+  it('attributes blockers by default, since the direction is now established', () => {
+    // `Inward` means the row's own issue is the BLOCKED one: verified against
+    // DDTBP-8/DDTBP-27 and DDTSG-24/DDTSG-23 in Jira. See BLOCKS_DIRECTION_MEANING.
+    const blocked = item('DDTSG-1');
+    expect(blocked.blockers.map((b) => b.key)).toEqual(['DDTGC-1']);
+    expect(blocked.blockers[0]?.open).toBe(true);
+    expect(blocked.blockers[0]?.type).toBe('is blocked by');
+  });
+
+  it('does not warn about DIRECTION once it is established', () => {
+    // The warning existed to make the gap visible. Leaving it in place after the gap
+    // closed would train readers to ignore it.
+    const subjects = adapt().diagnostics.map((d) => d.subject);
+    expect(subjects).not.toContain('IssueLinks.DIRECTION');
   });
 
   it('states each known loss once, so a degradation is never rediscovered as a bug', () => {
@@ -236,9 +246,14 @@ describe('values that cannot be inferred are reported, never guessed', () => {
 describe('transformation warnings', () => {
   it('raises every required finding against the fixture', () => {
     const { tally } = adapt();
-    for (const code of ['unknown-status', 'unmapped-site', 'missing-dates', 'duplicate-record', 'unsupported-value']) {
+    for (const code of ['unknown-status', 'unmapped-site', 'missing-dates', 'duplicate-record']) {
       expect(tally[code], `no ${code} diagnostic was raised`).toBeGreaterThan(0);
     }
+    // `unsupported-value` is deliberately absent from that list now: the fixture's only
+    // source of it was the unresolved-DIRECTION warning, and the direction is resolved.
+    // It is still raised for a row that cannot be identified at all.
+    const noKey = adapt({ ...FEED3_FIXTURE, issues: [...FEED3_FIXTURE.issues, { ISSUE_KEY: '' }] });
+    expect(noKey.tally['unsupported-value']).toBeGreaterThan(0);
   });
 
   it('separates a knowingly deferred project from an unregistered one', () => {

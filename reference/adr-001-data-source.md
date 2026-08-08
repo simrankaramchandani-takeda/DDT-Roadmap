@@ -433,6 +433,68 @@ site and region resolution for every exported project, `DDTJG` filtered as out-o
 noise, wiki-markup SPOT narratives, and the `hold` phase. No project alias, no unmapped
 site, and no duplicate record was found.
 
+### WP6 validation, 2026-08-08 — the portfolio now reconciles end to end
+
+With `ISSUE_TYPE_LEVELS` captured in full (below) and the `Blocks` direction resolved, the
+feed path reproduces **every** Phase C cross-check target in `design-001` §8 exactly:
+
+| Target | Expected | Measured from Feed #3 |
+|---|---|---|
+| Level-1 roadmap items | 510 | **510** |
+| Sites carrying work | 18/18 non-zero | **18/18** |
+| Aligned / site-local | 249 / 261 | **249 / 261** |
+| Initiatives referenced | 26 of 36 | **26 of 36** |
+| Initiatives returned | 36 | **36** |
+| Fully-local sites | `DDTYAR` 17/17 | **`DDTYAR` 17/17** |
+| Blocking diagnostics | 0 | **0** |
+| Level-1 rows unaccounted for | 0 | **0** |
+
+**Diagnostics went from 918 blocking errors to zero.** The whole reduction is the type
+registry: 36 unregistered in-scope type IDs were blocking 918 of 1371 rows and hiding 17
+of 18 sites. Captured from Jira REST via the Atlassian MCP channel —
+`getJiraProjectIssueTypesMetadata` for 18 projects, and live `issuetype` blocks for
+`NEUCHDDT`, which denies `createmeta` to this identity. Nothing was inferred; `SCOPE_ID`
+was cross-checked against the feed's own `IssueTypes` rows and matched on every entry.
+
+**`BLOCKS_DIRECTION_MEANING` is resolved: `Inward` means the row's own issue is BLOCKED.**
+Verified on two independent pairs against Jira — `DDTBP-8 [Inward] -> DDTBP-27` appears in
+Jira as `inwardIssue: DDTBP-27` ("is blocked by"), and `DDTSG-24 [Outward] -> DDTSG-23` as
+`outwardIssue: DDTSG-23` ("blocks"). All 28 `Blocks` rows are internally consistent: every
+reciprocal pair carries exactly one `Inward` and one `Outward`. Four items now carry
+blockers. Recorded in `config/feed.ts`: Jira's `createIssueLink` documentation uses the
+opposite framing to the read API, and taking the doc wording as read semantics is exactly
+how this gets inverted.
+
+**Two measurement errors found and corrected, both mine, both instructive:**
+
+1. **A row with no `ISSUE_KEY` was silently dropped.** `dedupeByIdentity` skips records
+   with an undefined identity, so such a row never reached the diagnostic written to catch
+   it. Now reported before dedupe. Silent loss is the one failure mode this layer exists to
+   prevent, and it had a hole in it.
+2. **A field-yield metric measured the wrong denominator and manufactured a parser bug.**
+   `buildCoverage` measures over ACTIVE items; counting the feed side over all 510 level-1
+   rows reported the SPOT narrative parser at 80.6%. On the correct basis the pipeline is
+   healthy, and the stages separate cleanly:
+
+   | Stage | Measured | Meaning |
+   |---|---|---|
+   | populated -> table parsed | 295 -> 291 (98.6%) | parser; the 4 misses are plain text, not tables |
+   | table parsed -> status text authored | 291 -> 241 (82.8%) | **data** — 50 tables carry phase/state/URL and no authored paragraph |
+   | status text -> used as summary | 241 -> 241 (100%) | summariser |
+   | authored RAG populated -> resolved | 419 -> 419 (100%) | — |
+
+   This is the same basis trap `DISCOVERY_BASELINE` warns about, and it reads as a
+   regression every time. The census figures it was compared against — 424 RAG, 299
+   narrative, 312 SPOT ID over all level-1 items — were reproduced exactly, which is what
+   made the mismatch findable.
+
+**Parity gate implemented** (`npm run diff-snapshots`). Two independent feed reads compare
+at **zero variance across all 510 items** — counts, membership, status, ownership, site,
+dates — so the pipeline is deterministic and the differ works. **This is not REST-vs-feed
+parity.** That run needs `data/snapshot.json` from `npm run sync`, which needs a
+`JIRA_API_TOKEN` that is not configured. Until it happens, the source swap is validated
+against measured baselines and against itself, not against the pipeline it replaces.
+
 ### Hierarchy level: non-blocking for alignment, still required for selection
 
 `hierarchy` appears **zero times** in Feed #3's 57 KB EDMX, and its `IssueTypes` is identical to
@@ -483,13 +545,30 @@ ownership**, and the position is weaker than the earlier revision implied, not s
   There is no change-notification path, so a reconfiguration would arrive as a failing sync.
 - **E8 — precedent.** No known non-BI consumer of these feeds. A precedent would collapse E4 and
   E1 into a known-good pattern.
-- **Credential type.** Authentication is Basic username/password. Whether it is a service account
-  or a named individual is **still unconfirmed**, and it decides whether the OData move removes
-  the key-person dependency or merely relocates it. A rotation owner is also unidentified.
-- **Entitlement scope.** Alpha Serve connectors typically export according to the permissions of
-  the account that configured the data source, so the snapshot's data scope may be one
-  individual's Jira permissions. If that account's access changes, the roadmap's contents change
-  with no signal and no audit trail.
+- **Credential type — RESOLVED 2026-08-08, and it is the finding that decides the migration.**
+  It is **a named individual's personal Takeda account**, not a service account: the configured
+  `ODATA_USERNAME` is a `firstname.lastname@takeda.com` address with no service-account marker.
+  Two facts make this load-bearing rather than cosmetic:
+
+  1. **The endpoint binds the export to that identity.** A mismatched username answers
+     `401 Email mismatch` — as against `Email is invalid` for a malformed one — so the
+     credential is not interchangeable. The export belongs to an account.
+  2. **Alpha Serve connectors export according to the permissions of the account that
+     configured the data source.** So the roadmap's data scope *is* that individual's Jira
+     permissions.
+
+  **Therefore the OData migration as currently configured RELOCATES the key-person dependency
+  rather than removing it — the exact outcome this ADR set out to avoid.** If that person's
+  access changes, or they change role or leave, the dashboard's contents change or the sync
+  fails, with no signal and no audit trail. A rotation owner is still unidentified because
+  there is nothing yet to rotate.
+
+  This is the most concrete and most fixable of the open items: it needs a service credential,
+  not a policy decision.
+- **Entitlement scope.** Confirmed as the consequence of the above: the snapshot's data scope is
+  one individual's Jira permissions. Worth stating that the observed scope is currently
+  *correct* — all 19 in-scope projects return rows and every count reconciles — so this is a
+  durability risk, not a present defect.
 
 We would be taking a dependency on a **third** undocumented feed from an unidentified owner. That
 is the escalation, and it gates step 4 of the migration sequence.

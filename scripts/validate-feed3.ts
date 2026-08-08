@@ -41,6 +41,7 @@ import {
   SITE_KEYS,
 } from '@config/projects.js';
 import { STATUS_NAME_TO_PHASE } from '@config/status-map.js';
+import { assessCompleteness, type CompletenessFinding } from '@/lib/feed/completeness.js';
 import { createODataRepositories } from '@/lib/feed/odata-repositories.js';
 import { classifyFeedProject, feedText } from '@/lib/feed/normalise.js';
 import { redactText } from '@/lib/feed/odata-client.js';
@@ -433,6 +434,73 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
+  // 6. Portfolio completeness
+  // -------------------------------------------------------------------------
+  const completeness = assessCompleteness(payload, snapshot);
+
+  heading('6. Portfolio completeness report');
+  line('  Reconciliation -- every in-scope level-1 row must become a roadmap item:');
+  line(`    in-scope rows            ${completeness.reconciliation.inScopeRows}`);
+  line(`    level-1 rows (sites)     ${completeness.reconciliation.level1Rows}`);
+  line(`    roadmap items produced   ${completeness.reconciliation.items}`);
+  line(
+    `    UNACCOUNTED FOR          ${completeness.reconciliation.unaccounted}` +
+      (completeness.reconciliation.unaccounted === 0 ? '  (reconciles)' : '  <-- work missing from the dashboard'),
+  );
+
+  line('');
+  line(`  Sites: ${completeness.sites.withItems}/${completeness.sites.configured} carry roadmap items.`);
+  if (completeness.sites.withoutItems.length > 0) {
+    line(`    without items: ${completeness.sites.withoutItems.join(', ')}`);
+  }
+
+  line('');
+  line('  Initiatives:');
+  line(`    discovery baseline       ${completeness.initiatives.expected}`);
+  line(`    level-2 rows in feed     ${completeness.initiatives.returnedByFeed}`);
+  line(`    in snapshot (real)       ${completeness.initiatives.inSnapshot}`);
+  line(`    dangling references      ${completeness.initiatives.dangling.length}${completeness.initiatives.dangling.length > 0 ? ` (${completeness.initiatives.dangling.join(', ')})` : ''}`);
+  line(`    carrying no items        ${completeness.initiatives.withNoItems.length}${completeness.initiatives.withNoItems.length > 0 ? ` (${completeness.initiatives.withNoItems.join(', ')})` : ''}`);
+
+  line('');
+  line('  Per-project reconciliation:');
+  line('    project      rows  lvl1  lvl2  unreg  items  unacct  classification');
+  for (const p of completeness.projects) {
+    line(
+      `    ${p.key.padEnd(12)} ${String(p.rows).padStart(4)}  ${String(p.level1Rows).padStart(4)}  ` +
+        `${String(p.level2Rows).padStart(4)}  ${String(p.unregisteredRows).padStart(5)}  ` +
+        `${String(p.items).padStart(5)}  ${String(p.unaccounted).padStart(6)}  ${p.classification}`,
+    );
+  }
+
+  line('');
+  line('  Field yield, over ACTIVE items -- the basis buildCoverage uses.');
+  line('  Each stage is nested in the one above, so a drop localises the cause:');
+  line('    populated -> parsed  = parser;  parsed -> authored = data;  authored -> used = summariser.');
+  for (const y of completeness.yields) {
+    const pct = (y.yield * 100).toFixed(1);
+    // `status text authored` is expected to be well under 100%: 50 SPOT tables carry no
+    // authored paragraph. Flagging it would train the reader to ignore this whole block.
+    const expectedLow = y.field === 'status text authored';
+    line(
+      `    ${y.field.padEnd(21)} ${String(y.populatedInFeed).padStart(4)} -> ` +
+        `${String(y.resolvedInModel).padStart(4)}  (${pct}%)` +
+        (y.yield < 0.95 && !expectedLow ? '  <-- investigate' : '') +
+        (expectedLow ? '  (expected: authored content, not a defect)' : ''),
+    );
+  }
+
+  const byKind = (kind: CompletenessFinding['kind']): CompletenessFinding[] =>
+    completeness.findings.filter((f) => f.kind === kind);
+
+  for (const kind of ['missing', 'duplicate', 'orphaned', 'excluded'] as const) {
+    const found = byKind(kind);
+    line('');
+    line(`  ${kind.toUpperCase()} entities: ${found.length}`);
+    for (const finding of found) line(`    ${finding.subject}: ${finding.detail}`);
+  }
+
+  // -------------------------------------------------------------------------
   // Machine-readable copy, and the verdict
   // -------------------------------------------------------------------------
   await mkdir(REPORT_DIR, { recursive: true });
@@ -479,6 +547,15 @@ async function main(): Promise<void> {
           [...dateFormats.entries()].map(([column, shapes]) => [column, Object.fromEntries(shapes)]),
         ),
         coverage: snapshot.coverage,
+        completeness: {
+          ok: completeness.ok,
+          reconciliation: completeness.reconciliation,
+          sites: completeness.sites,
+          initiatives: completeness.initiatives,
+          yields: completeness.yields,
+          projects: completeness.projects,
+          findings: completeness.findings,
+        },
         diagnostics: diagnostics.map((d) => ({
           severity: d.severity,
           code: d.code,
@@ -502,8 +579,18 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  line(`  No blocking errors. ${warnings.length} warning(s) — these are the dataset describing`);
-  line('  itself and are reported on the Data & coverage page by design.');
+
+  if (!completeness.ok) {
+    line('  BLOCKING: the portfolio does not reconcile. No record was refused, but entities are');
+    line('  missing or duplicated — which is the failure a per-row diagnostic cannot catch.');
+    process.exitCode = 1;
+    return;
+  }
+
+  line(`  No blocking errors, and the portfolio reconciles: ${completeness.reconciliation.level1Rows}`);
+  line(`  level-1 rows produced ${completeness.reconciliation.items} items with none unaccounted for.`);
+  line(`  ${warnings.length} warning(s) — these are the dataset describing itself and are`);
+  line('  reported on the Data & coverage page by design.');
 }
 
 main().catch((error: unknown) => {

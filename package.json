@@ -16,6 +16,7 @@
     "probe-odata": "tsx scripts/probe-odata.ts",
     "validate-feed3": "tsx scripts/validate-feed3.ts",
     "capture-issue-types": "tsx scripts/capture-issue-types.ts",
+    "diff-snapshots": "tsx scripts/diff-snapshots.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

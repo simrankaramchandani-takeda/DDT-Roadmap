@@ -307,6 +307,9 @@ function adaptIssueRow(
   options: ResolvedOptions,
   collector: DiagnosticCollector,
 ): JiraIssue | undefined {
+  // Unreachable via `adaptFeedIssues`, which reports and filters keyless rows before
+  // dedupe. Retained because this function is exported territory: a direct caller must
+  // not get a silently skipped row either.
   const key = feedText(row.ISSUE_KEY);
   if (!key) {
     collector.add(
@@ -409,6 +412,25 @@ export function adaptFeedIssues(
 ): { issues: JiraIssue[]; collector: DiagnosticCollector } {
   const resolved = resolveOptions(options);
   const side = indexSideTables(payload, collector);
+
+  // REPORTED BEFORE DEDUPE, AND THAT ORDER IS THE POINT. `dedupeByIdentity` skips any
+  // record whose identity is undefined, so a row with no `ISSUE_KEY` never reaches
+  // `adaptIssueRow` and its diagnostic there cannot fire. Without this pre-pass the row
+  // vanishes without a word -- the one failure mode this whole layer exists to prevent.
+  // Counted rather than listed, because a row with no key has nothing to name it by.
+  const unidentified = payload.issues.filter((row) => !feedText(row.ISSUE_KEY)).length;
+  if (unidentified > 0) {
+    collector.add(
+      diagnostic(
+        'error',
+        'unsupported-value',
+        '(rows with no ISSUE_KEY)',
+        `${unidentified} row(s) in the Issues export carry no ISSUE_KEY, so they cannot be ` +
+          `identified, linked or displayed, and were skipped.`,
+        'Confirm the Issues export still populates ISSUE_KEY on every row.',
+      ),
+    );
+  }
 
   const { kept: rows, diagnostics: duplicates } = dedupeByIdentity(
     payload.issues,

@@ -89,6 +89,14 @@ export {
 } from './source.js';
 
 export {
+  assessCompleteness,
+  type CompletenessFinding,
+  type CompletenessReport,
+  type FieldYield,
+  type ProjectReconciliation,
+} from './completeness.js';
+
+export {
   createODataRepositories,
   type ODataAdaptation,
   type ODataRepositories,

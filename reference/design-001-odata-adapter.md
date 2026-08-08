@@ -25,23 +25,40 @@
 > **Deliberately not built.** The `sync.ts` seam and `diff-snapshots.ts` — the Phase C
 > parity gate. Snapshot remains the default source.
 >
-> **Blockers carried forward, all stated in `config/feed.ts` and reported at runtime:**
+> ## WP6 update (2026-08-08): technically ready, governance-blocked
 >
-> 1. **`ISSUE_TYPE_LEVELS` is incomplete, and this is now MEASURED rather than estimated.**
->    The first real read found **33 unregistered in-scope type IDs affecting 785 of 1371
->    rows, leaving 14 of 18 sites with zero roadmap items.** WP5 added the six IDs that
->    have observed REST metadata in `tests/fixtures/jira-issues.ts` (taking items from 24
->    to 157 and sites with work from 1 to 4); the rest need
->    `npm run capture-issue-types`, which requires a `JIRA_API_TOKEN` that is not
->    currently configured. An unregistered type stays a blocking diagnostic naming the ID,
->    name and scope — by design (§3a), since the alternative is silent loss.
-> 2. **`BLOCKS_DIRECTION_MEANING` is `'unresolved'`** (§6). While it stays that way the
->    adapter attributes **no** blockers from the feed and says so once per run. One
->    observation against Jira settles it; `tests/feed-adapter.test.ts` already pins both
->    the unresolved and resolved behaviours.
-> 3. **Governance — E4, E6, E8 remain open.** Building and running the client behind a
->    non-default flag is migration step 4. Making OData the default is step 6 and must not
->    ship without sign-off.
+> **Both WP5 blockers are closed.**
+>
+> 1. **`ISSUE_TYPE_LEVELS` is complete for all 19 in-scope projects**, captured from Jira
+>    REST via the Atlassian MCP channel. Blocking diagnostics went **918 → 0**; roadmap
+>    items **24 → 510**; sites carrying work **1 → 18**. `ISSUE_TYPE_LEVELS_ARE_COMPLETE`
+>    is now `true`, bounded to in-scope projects and to be flipped back in the same commit
+>    that widens `config/projects.ts`.
+> 2. **`BLOCKS_DIRECTION_MEANING = 'inward-is-blocked'`**, verified on two independent
+>    pairs against Jira and cross-checked for consistency across all 28 `Blocks` rows.
+>    Blockers are attributed; the DIRECTION warning is gone.
+>
+> **Every Phase C cross-check target in §8 is met exactly** — 510 items, 18/18 sites,
+> 249 aligned / 261 local, 26 of 36 initiatives referenced, `DDTYAR` 17/17 local.
+> `diff-snapshots` is implemented and reports zero variance across two feed reads.
+>
+> **Still outstanding, and the reason this is not a GO:**
+>
+> - **The credential is a named individual's personal account, not a service account.**
+>   Confirmed empirically; see ADR-001. The migration as configured relocates the
+>   key-person dependency instead of removing it, and ties the portfolio's data scope to one
+>   person's Jira permissions. This is the top blocker and needs no policy decision — only a
+>   service credential.
+> - **E4, E6, E8 remain open.** Unchanged by anything in WP5 or WP6. Note that this
+>   application is now a working non-BI consumer, which is evidence of technical
+>   feasibility for E8 but not of approval.
+> - **REST-vs-feed parity has never been run.** It needs `data/snapshot.json` from
+>   `npm run sync`, which needs a `JIRA_API_TOKEN`. The source swap is currently validated
+>   against measured baselines and against itself, not against the pipeline it replaces.
+>
+> Migration step 4 (build behind a flag) is complete. Step 5 (run both and diff) is
+> blocked on the Jira token. Step 6 (make OData the default) is blocked on step 5 and on
+> governance. `ROADMAP_SOURCE` therefore still defaults to `snapshot`.
 
 - **Status:** Approved. Phase A is implemented (see above); Phases B–E are not.
 - **Date:** 2026-08-07
